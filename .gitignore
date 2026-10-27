@@ -1,0 +1,126 @@
+# Local .terraform directories
+.terraform/
+
+# Terraform state files
+*.tfstate
+*.tfstate.*
+
+# Terraform plan files
+*.tfplan
+tfplan
+planout
+
+# Terraform variable files
+*.tfvars
+*.tfvars.json
+
+# Terraform crash logs
+crash.log
+crash.*.log
+
+# Terraform override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Terraform temporary lock files
+.terraform.tfstate.lock.info
+
+# Terraform CLI configuration
+.terraformrc
+terraform.rc
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# Python testing and coverage files
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Python build files
+build/
+dist/
+
+# Ansible retry and temporary files
+*.retry
+.ansible/
+
+# Ansible credentials
+.vault_pass
+.vault_pass.txt
+ansible/secrets/
+ansible/credentials/
+
+# Docker environment files
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Docker Compose local overrides
+compose.override.yml
+compose.override.yaml
+docker-compose.override.yml
+docker-compose.override.yaml
+
+# Local container data
+docker-data/
+pgdata/
+postgres-data/
+
+# Local database files
+*.db
+*.sqlite
+*.sqlite3
+*.dump
+*.backup
+
+# SOAR runtime data
+soar/data/
+soar/logs/
+
+# Private keys and certificates
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_ed25519
+id_ecdsa
+
+# Local credentials
+credentials.json
+secrets.json
+
+# WireGuard private configurations
+wireguard/secrets/
+
+# Log and temporary files
+*.log
+*.tmp
+*.temp
+*.bak
+*.pid
+
+# VS Code and JetBrains settings
+.vscode/
+.idea/
+
+# Windows files
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS files
+.DS_Store

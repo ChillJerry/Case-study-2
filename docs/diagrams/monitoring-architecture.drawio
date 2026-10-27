@@ -1,0 +1,98 @@
+<mxfile host="app.diagrams.net" agent="ChatGPT">
+  <diagram id="monitoring-architecture" name="Monitoring Architecture">
+    <mxGraphModel dx="1392" dy="759" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1250" pageHeight="760" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=13;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=23;fontStyle=1;fontColor=#15243D;" value="Observability Architecture" vertex="1">
+          <mxGeometry height="44" width="1020" x="30" y="10" as="geometry" />
+        </mxCell>
+        <mxCell id="sub" parent="1" style="whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=13;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;fontColor=#536783;" value="Collection, storage, visualization and security alert routing" vertex="1">
+          <mxGeometry height="22" width="1070" x="30" y="54" as="geometry" />
+        </mxCell>
+        <mxCell id="src" parent="1" style="whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=13;rounded=1;arcSize=10;fillColor=#EDFAF4;strokeColor=#3C9B76;strokeWidth=2;dashed=1;fontColor=#215C44;verticalAlign=top;spacingTop=12;fontStyle=1;" value="Monitored systems (separate environment)" vertex="1">
+          <mxGeometry height="520" width="320" x="35" y="115" as="geometry" />
+        </mxCell>
+        <mxCell id="lin" parent="1" style="whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=13;rounded=1;arcSize=12;fillColor=#FFFFFF;strokeColor=#7188A4;strokeWidth=2;fontColor=#263B57;fontStyle=1;" value="Linux VM&lt;br&gt;Authentication logs&lt;br&gt;Host metrics" vertex="1">
+          <mxGeometry height="95" width="235" x="75" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="fw" parent="1" style="whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=13;rounded=1;arcSize=12;fillColor=#FFF3DF;strokeColor=#D38930;strokeWidth=2;fontColor=#71460F;fontStyle=1;" value="Security VM&lt;br&gt;Firewall events&lt;br&gt;Host metrics" vertex="1">
+          <mxGeometry height="95" width="235" x="75" y="355" as="geometry" />
+        </mxCell>
+        <mxCell id="alloy" parent="1" style="whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=13;rounded=1;arcSize=12;fillColor=#EBEEFF;strokeColor=#686CC1;strokeWidth=2;fontColor=#292D76;fontStyle=1;" value="Grafana Alloy&lt;br&gt;Local agents" vertex="1">
+          <mxGeometry height="70" width="160" x="115" y="520" as="geometry" />
+        </mxCell>
+        <mxCell id="aws" parent="1" style="whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=13;rounded=1;arcSize=10;fillColor=#EDF4FF;strokeColor=#4779C1;strokeWidth=2;dashed=1;fontColor=#173B69;verticalAlign=top;spacingTop=12;fontStyle=1;" value="AWS observability services" vertex="1">
+          <mxGeometry height="520" width="815" x="390" y="115" as="geometry" />
+        </mxCell>
+        <mxCell id="prom" parent="1" style="whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=13;rounded=1;arcSize=12;fillColor=#EBEEFF;strokeColor=#686CC1;strokeWidth=2;fontColor=#292D76;fontStyle=1;" value="Prometheus&lt;br&gt;Metrics + alert rules" vertex="1">
+          <mxGeometry height="100" width="195" x="440" y="185" as="geometry" />
+        </mxCell>
+        <mxCell id="loki" parent="1" style="whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=13;rounded=1;arcSize=12;fillColor=#EBEEFF;strokeColor=#686CC1;strokeWidth=2;fontColor=#292D76;fontStyle=1;" value="Loki&lt;br&gt;Log ingestion / storage" vertex="1">
+          <mxGeometry height="100" width="195" x="440" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="graf" parent="1" style="whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=13;rounded=1;arcSize=12;fillColor=#EBEEFF;strokeColor=#686CC1;strokeWidth=2;fontColor=#292D76;fontStyle=1;" value="Grafana&lt;br&gt;Dashboards + LogQL alerts" vertex="1">
+          <mxGeometry height="110" width="210" x="725" y="275" as="geometry" />
+        </mxCell>
+        <mxCell id="am" parent="1" style="whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=13;rounded=1;arcSize=12;fillColor=#FFFFFF;strokeColor=#7188A4;strokeWidth=2;fontColor=#263B57;fontStyle=1;" value="Alertmanager&lt;br&gt;Metric alert routing" vertex="1">
+          <mxGeometry height="85" width="210" x="725" y="470" as="geometry" />
+        </mxCell>
+        <mxCell id="soar" parent="1" style="whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=13;rounded=1;arcSize=12;fillColor=#FFF3DF;strokeColor=#D38930;strokeWidth=2;fontColor=#71460F;fontStyle=1;" value="SOAR API&lt;br&gt;Webhook receiver" vertex="1">
+          <mxGeometry height="95" width="155" x="1005" y="355" as="geometry" />
+        </mxCell>
+        <mxCell id="metrics" parent="1" style="whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=13;rounded=1;arcSize=12;fillColor=#FFFFFF;strokeColor=#7188A4;strokeWidth=2;fontColor=#263B57;fontStyle=1;" value="SOAR /metrics&lt;br&gt;scrape target" vertex="1">
+          <mxGeometry height="75" width="175" x="997" y="175" as="geometry" />
+        </mxCell>
+        <mxCell id="note" parent="1" style="whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fontFamily=Arial;fontSize=13;rounded=1;fillColor=#F4F7FC;strokeColor=#C5D0E1;fontColor=#33445D;" value="Metrics are scraped by Prometheus; logs are pushed to Loki. Log-based alerts use Grafana alert rules." vertex="1">
+          <mxGeometry height="48" width="1120" x="35" y="680" as="geometry" />
+        </mxCell>
+        <mxCell id="e0" edge="1" parent="1" source="lin" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=block;endFill=1;fontFamily=Arial;fontSize=11;labelBackgroundColor=#FFFFFF;strokeColor=#40966F;" target="alloy" value="collect">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="60" y="227.5" />
+              <mxPoint x="60" y="555" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="fw" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=block;endFill=1;fontFamily=Arial;fontSize=11;labelBackgroundColor=#FFFFFF;strokeColor=#40966F;" target="alloy" value="collect">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="alloy" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=block;endFill=1;fontFamily=Arial;fontSize=11;labelBackgroundColor=#FFFFFF;strokeColor=#617EAB;" target="loki" value="push logs">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" source="prom" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=block;endFill=1;fontFamily=Arial;fontSize=11;labelBackgroundColor=#FFFFFF;strokeColor=#617EAB;entryX=1;entryY=0.25;entryDx=0;entryDy=0;" target="alloy" value="scrape agent metrics">
+          <mxGeometry relative="1" x="0.0396" as="geometry">
+            <Array as="points">
+              <mxPoint x="330" y="235" />
+              <mxPoint x="330" y="537.5" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="prom" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=block;endFill=1;fontFamily=Arial;fontSize=11;labelBackgroundColor=#FFFFFF;strokeColor=#617EAB;" target="graf" value="PromQL">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="1" source="loki" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=block;endFill=1;fontFamily=Arial;fontSize=11;labelBackgroundColor=#FFFFFF;strokeColor=#617EAB;" target="graf" value="LogQL">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="1" source="prom" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=block;endFill=1;fontFamily=Arial;fontSize=11;labelBackgroundColor=#FFFFFF;strokeColor=#C58937;exitX=1;exitY=0.25;exitDx=0;exitDy=0;" target="am" value="metric alerts">
+          <mxGeometry relative="1" x="0.5541" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="700" y="210" />
+              <mxPoint x="700" y="512.5" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e7" edge="1" parent="1" source="am" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=block;endFill=1;fontFamily=Arial;fontSize=11;labelBackgroundColor=#FFFFFF;strokeColor=#C58937;" target="soar" value="webhook">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" edge="1" parent="1" source="graf" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=block;endFill=1;fontFamily=Arial;fontSize=11;labelBackgroundColor=#FFFFFF;strokeColor=#C58937;" target="soar" value="log alert webhook">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" edge="1" parent="1" source="prom" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;endArrow=block;endFill=1;fontFamily=Arial;fontSize=11;labelBackgroundColor=#FFFFFF;strokeColor=#617EAB;" target="metrics" value="scrape SOAR metrics">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,43 @@
+
+name: Infrastructure Checks
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  terraform-validation:
+    name: Validate Terraform
+    runs-on: [self-hosted, Windows]
+
+    defaults:
+      run:
+        shell: powershell
+        working-directory: terraform
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check Terraform formatting
+        run: |
+          & "D:\Programs\terraform\terraform.exe" fmt -check -recursive
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Initialize Terraform without remote backend
+        run: |
+          & "D:\Programs\terraform\terraform.exe" init -backend=false -input=false
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Validate Terraform configuration
+        run: |
+          & "D:\Programs\terraform\terraform.exe" validate
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

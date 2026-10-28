@@ -243,6 +243,24 @@ VPN access will be restricted through peer authentication, routing configuration
 
 The VPN will not provide unrestricted access to AWS resources. Authorized and unauthorized connectivity will be verified during integration testing.
 
+#### WireGuard Tunnel Design
+
+The hybrid VPN will use a dedicated tunnel subnet, 10.40.0.0/30.
+
+The AWS gateway will use tunnel address 10.40.0.1, while the on-premises gateway will use 10.40.0.2.
+
+The AWS WireGuard peer will advertise the on-premises network (10.30.0.0/24), and the local peer will route AWS VPC traffic (10.20.0.0/16) through the encrypted tunnel.
+
+WireGuard peer authentication will use separate asymmetric key pairs. Private keys will not be stored in Git or Terraform state.
+
+The on-premises gateway will initiate the connection to the AWS gateway's Elastic IP on UDP port 51820.
+
+Both gateways will require IPv4 forwarding and firewall policies permitting authorized VPN traffic. The on-premises virtual machines will route AWS-bound traffic through the local gateway.
+
+Traffic between the networks will preserve original private IP addresses to support firewall filtering and security event attribution.
+
+Ansible templates will define the WireGuard interface configuration. Actual keys, gateway network configuration and connectivity testing will be completed during implementation.
+
 ### 3.5 Firewall and Security Groups
 
 AWS Security Groups will restrict traffic between the different infrastructure components.

@@ -1,0 +1,9 @@
+[Interface]
+Address = 10.40.0.2/30
+PrivateKey = {{ wireguard_onprem_private_key }}
+
+[Peer]
+PublicKey = {{ wireguard_aws_public_key }}
+Endpoint = {{ wireguard_aws_endpoint }}:51820
+AllowedIPs = 10.40.0.1/32, 10.20.0.0/16
+PersistentKeepalive = 25

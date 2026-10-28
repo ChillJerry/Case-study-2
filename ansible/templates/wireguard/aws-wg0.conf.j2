@@ -1,0 +1,8 @@
+[Interface]
+Address = 10.40.0.1/30
+ListenPort = 51820
+PrivateKey = {{ wireguard_aws_private_key }}
+
+[Peer]
+PublicKey = {{ wireguard_onprem_public_key }}
+AllowedIPs = 10.40.0.2/32, 10.30.0.0/24

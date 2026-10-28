@@ -193,30 +193,55 @@ These addresses will be assigned through the local virtual network configuration
 
 The local network will not overlap with the AWS VPC.
 
+
 ### 3.4 Hybrid Connectivity
 
-WireGuard will establish encrypted communication between AWS and the on-premises network.
+WireGuard will establish an encrypted VPN connection between the AWS infrastructure and the simulated on-premises network.
 
-The gateway will route permitted traffic between:
+The gateway will provide controlled connectivity between:
 
 - AWS VPC: 10.20.0.0/16
 - On-premises network: 10.30.0.0/24
 
-The VPN configuration will use authenticated peers and restricted AllowedIPs settings.
+The VPN will use authenticated peers and restricted AllowedIPs settings to limit permitted network destinations.
 
-AWS route tables and host firewall rules will control the permitted network traffic.
+#### Routing and Network Address Translation
 
-The VPN will not provide unrestricted access to every cloud service.
+The monitoring and SOAR subnets will share a private route table.
 
-The monitoring and SOAR subnets will use a shared private route table.
+Outbound IPv4 traffic will be routed through the gateway EC2 instance, which will provide Network Address Translation (NAT) for private AWS resources.
 
-Outbound IPv4 traffic will be routed through the gateway EC2 instance, which will provide controlled NAT functionality.
+Traffic destined for the on-premises network (10.30.0.0/24) will be routed through the gateway and forwarded over the WireGuard tunnel without internet NAT.
 
-Traffic destined for the simulated on-premises network (10.30.0.0/24) will be routed through the gateway and forwarded over the WireGuard tunnel.
+Source/destination checking will be disabled on the gateway to allow packet forwarding.
 
-Source/destination checking will be disabled on the gateway to support packet forwarding.
+AWS route tables, Security Groups and Linux firewall rules will control communication between the AWS infrastructure, on-premises systems and external networks.
 
-The gateway will use Linux IP forwarding and host firewall rules to control traffic between the AWS network, on-premises environment and external networks.
+#### Gateway Configuration
+
+The gateway will use Linux IP forwarding and nftables to manage network traffic.
+
+Initial gateway configuration will be automated using an EC2 user-data script. The script will:
+
+1. Install and enable nftables.
+2. Enable IPv4 packet forwarding.
+3. Configure outbound NAT for the private AWS subnets.
+4. Apply initial firewall forwarding rules.
+5. Validate and activate the firewall configuration.
+
+WireGuard tunnel configuration, VPN-specific forwarding rules and DNS forwarding will be implemented separately.
+
+Subsequent configuration changes and maintenance will be managed through Ansible.
+
+#### Security and Access Control
+
+Only the VPN gateway will expose the WireGuard endpoint to the public internet.
+
+The monitoring and SOAR servers will remain in private subnets without public IP addresses.
+
+VPN access will be restricted through peer authentication, routing configuration and firewall policies.
+
+The VPN will not provide unrestricted access to AWS resources. Authorized and unauthorized connectivity will be verified during integration testing.
 
 ### 3.5 Firewall and Security Groups
 

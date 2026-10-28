@@ -37,3 +37,21 @@ variable "onprem_cidr" {
   type        = string
   default     = "10.30.0.0/24"
 }
+
+variable "monitoring_instance_type" {
+  description = "EC2 instance type for monitoring services"
+  type        = string
+  default     = "t3.medium"
+}
+
+variable "soar_instance_type" {
+  description = "EC2 instance type for the SOAR application"
+  type        = string
+  default     = "t3.small"
+}
+
+variable "gateway_instance_type" {
+  description = "EC2 instance type for the WireGuard gateway"
+  type        = string
+  default     = "t3.micro"
+}

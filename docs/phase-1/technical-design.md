@@ -302,6 +302,24 @@ The network security configuration will be tested through:
 
 The results will be recorded in the final testing documentation.
 
+### 4.4 Security Groups and Instance Management
+
+Three AWS Security Groups will separate the monitoring, SOAR and VPN gateway environments.
+
+The monitoring Security Group will allow Grafana access and Loki log ingestion from authorized systems connected through the VPN.
+
+The SOAR Security Group will allow API requests and metrics collection from the monitoring server over the private AWS network.
+
+The VPN gateway Security Group will allow WireGuard connections on UDP port 51820. Forwarded traffic will be controlled through VPC routing, Security Groups and host firewall rules.
+
+The EC2 instances will use an IAM instance profile with the AmazonSSMManagedInstanceCore policy.
+
+Administrative access will be provided through AWS Systems Manager Session Manager, avoiding the need to expose SSH to the public internet.
+
+Private instances will access the required Systems Manager endpoints through configured outbound networking.
+
+The final firewall configuration will be verified through authorized and unauthorized connectivity tests.
+
 ## 5. Monitoring Architecture
 
 ### 5.1 Overview
@@ -817,6 +835,24 @@ Terraform configuration will be divided into logical files or modules.
 Infrastructure state will be stored remotely with access restrictions and locking.
 
 Infrastructure changes will be reviewed through Terraform plans before deployment.
+
+#### Terraform State Management
+
+Terraform state is stored remotely in a dedicated Amazon S3 bucket in the eu-central-1 region.
+
+The S3 bucket uses versioning, AES256 server-side encryption and public access restrictions.
+
+Terraform uses S3 lockfiles to prevent concurrent operations from modifying the same infrastructure state.
+
+The backend configuration is maintained in `terraform/backend.tf`, while Terraform state files are excluded from version control.
+
+#### AWS Resource Management
+
+Terraform manages the network infrastructure, Security Groups, IAM roles and EC2 instance profiles.
+
+The monitoring, SOAR and VPN gateway environments are configured as separate infrastructure components.
+
+All infrastructure resources use consistent project and environment tags to support identification and management.
 
 ### 8.2 Ansible
 

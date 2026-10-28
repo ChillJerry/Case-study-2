@@ -208,6 +208,16 @@ AWS route tables and host firewall rules will control the permitted network traf
 
 The VPN will not provide unrestricted access to every cloud service.
 
+The monitoring and SOAR subnets will use a shared private route table.
+
+Outbound IPv4 traffic will be routed through the gateway EC2 instance, which will provide controlled NAT functionality.
+
+Traffic destined for the simulated on-premises network (10.30.0.0/24) will be routed through the gateway and forwarded over the WireGuard tunnel.
+
+Source/destination checking will be disabled on the gateway to support packet forwarding.
+
+The gateway will use Linux IP forwarding and host firewall rules to control traffic between the AWS network, on-premises environment and external networks.
+
 ### 3.5 Firewall and Security Groups
 
 AWS Security Groups will restrict traffic between the different infrastructure components.
@@ -1051,19 +1061,28 @@ Test results will include the observed impact, recovery process, recovery time a
 
 ## 11. Infrastructure Capacity
 
+
 ### 11.1 Compute Resources
 
-The deployment will begin with two application EC2 instances and a separate VPN gateway where required by the finalized network topology.
+The AWS infrastructure consists of three EC2 instances running Ubuntu Server 24.04 LTS.
 
-| Resource | Initial Resource Target | Workload |
-|---|---|---|
-| Monitoring EC2 | 2 vCPU, 4–8 GiB RAM | Grafana, Prometheus, Loki and Alertmanager |
-| SOAR EC2 | 2 vCPU, 4 GiB RAM | FastAPI and PostgreSQL |
-| VPN gateway | 2 vCPU, 1–2 GiB RAM | WireGuard and network forwarding |
+| Resource | Instance Type | vCPU | RAM | EBS Storage |
+|---|---|---|---|---|
+| Monitoring Server | t3.medium | 2 | 4 GiB | 40 GiB gp3 |
+| SOAR Server | t3.small | 2 | 2 GiB | 20 GiB gp3 |
+| VPN Gateway | t3.micro | 2 | 1 GiB | 12 GiB gp3 |
 
-These values are planning estimates rather than measured minimum requirements.
+The monitoring instance has additional memory allocated for Grafana, Prometheus, Loki and Alertmanager.
 
-The exact instance types will be selected after reviewing available AWS options and expected costs.
+The SOAR instance runs FastAPI and PostgreSQL, while the gateway handles WireGuard, private network routing and DNS forwarding.
+
+Instance sizing is based on the expected development and testing workload. Resource consumption will be measured through Prometheus and adjusted if necessary.
+
+All EC2 root volumes use encrypted gp3 storage. The application instances have private IP addresses, while the gateway uses an Elastic IP for VPN connectivity.
+
+T3 instances use standard CPU credit mode to avoid additional unlimited-mode CPU credit charges.
+
+The deployment prioritizes low operating costs and controlled recovery over multi-node high availability.
 
 ### 11.2 Storage
 

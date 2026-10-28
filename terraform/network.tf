@@ -83,3 +83,16 @@ resource "aws_route_table_association" "soar" {
   subnet_id      = aws_subnet.soar.id
   route_table_id = aws_route_table.private.id
 }
+
+resource "aws_route" "private_outbound" {
+  route_table_id         = aws_route_table.private.id
+  destination_cidr_block = "0.0.0.0/0"
+  network_interface_id   = aws_instance.gateway.primary_network_interface_id
+}
+
+resource "aws_route" "private_onprem" {
+  route_table_id         = aws_route_table.private.id
+  destination_cidr_block = var.onprem_cidr
+  network_interface_id   = aws_instance.gateway.primary_network_interface_id
+}
+

@@ -1,4 +1,3 @@
-
 #!/bin/bash
 set -euo pipefail
 
@@ -42,7 +41,7 @@ table inet filter {
         ct state established,related accept
 
         # Private AWS instances can access external services.
-        ip saddr { 10.20.10.0/24, 10.20.20.0/24 } ip daddr != 10.30.0.0/24 accept
+        ip saddr { 10.20.10.0/24, 10.20.20.0/24 } ip daddr != { 10.20.0.0/16, 10.30.0.0/24 } accept
 
         # AWS private subnets can reach the on-premises network over WireGuard.
         oifname "wg0" ip saddr { 10.20.10.0/24, 10.20.20.0/24 } ip daddr 10.30.0.0/24 accept
@@ -57,7 +56,7 @@ table ip nat {
         type nat hook postrouting priority srcnat; policy accept;
 
         # NAT internet-bound traffic but preserve original VPN source addresses.
-        ip saddr { 10.20.10.0/24, 10.20.20.0/24 } ip daddr != 10.30.0.0/24 masquerade
+        ip saddr { 10.20.10.0/24, 10.20.20.0/24 } ip daddr != { 10.20.0.0/16, 10.30.0.0/24 } masquerade
     }
 }
 EOF

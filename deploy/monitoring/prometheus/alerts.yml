@@ -1,0 +1,30 @@
+
+groups:
+  - name: infrastructure-alerts
+    rules:
+      - alert: ServerDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Monitoring target {{ $labels.instance }} is down"
+          description: "Prometheus has been unable to scrape {{ $labels.job }} on {{ $labels.instance }} for at least one minute."
+
+      - alert: HighCPUUsage
+        expr: 100 * (1 - avg by (host) (rate(node_cpu_seconds_total{environment="on-premises",mode="idle"}[5m]))) > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ $labels.host }}"
+          description: "CPU usage has exceeded 85% for five minutes."
+
+      - alert: HighMemoryUsage
+        expr: 100 * (1 - node_memory_MemAvailable_bytes{environment="on-premises"} / node_memory_MemTotal_bytes{environment="on-premises"}) > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {{ $labels.host }}"
+          description: "Memory usage has exceeded 90% for five minutes."

@@ -8,6 +8,7 @@ from pathlib import Path
 
 from app.soar.playbooks.containment_executor import ContainmentExecutor
 from app.soar.rules import Decision
+from app.soar.playbooks.service_containment import ServiceContainmentExecutor
 
 
 DATA_DIR = Path(os.environ.get("SOAR_DATA_DIR", "data/soar"))
@@ -80,6 +81,31 @@ def execute_actions(
                 approved_target=(
                         bool(target) and target in approved_targets
                 ),
+                dry_run=True,
+            )
+
+            if result["status"] == "simulated":
+                executed.append(action)
+
+        elif action == "simulate_service_containment":
+            labels = (alert or {}).get("labels", {})
+            service = labels.get("service", "")
+
+            approved_services = {
+                item.strip()
+                for item in os.environ.get(
+                    "SOAR_APPROVED_SERVICES", ""
+                ).split(",")
+                if item.strip()
+            }
+
+            executor = ServiceContainmentExecutor(
+                str(DATA_DIR / "service_containment.jsonl")
+            )
+
+            result = executor.execute(
+                service=service,
+                approved_services=approved_services,
                 dry_run=True,
             )
 

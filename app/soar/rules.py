@@ -37,6 +37,14 @@ SUPPORTED_RULES = {
             "simulate_ip_containment",
         ),
     },
+    "SuspiciousServiceDetected": {
+        "severity": "critical",
+        "actions": (
+            "record_incident",
+            "notify_operator",
+            "simulate_service_containment",
+        ),
+    },
 }
 
 

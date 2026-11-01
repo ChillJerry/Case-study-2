@@ -56,6 +56,7 @@ def build_timer_configuration(
         "[Timer]\n"
         f"OnCalendar={calendar}\n"
         "Persistent=true\n"
+        "AccuracySec=1s\n"
         f"Unit={RESTORE_UNIT}\n"
         "\n"
         "[Install]\n"

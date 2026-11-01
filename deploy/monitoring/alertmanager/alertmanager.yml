@@ -3,7 +3,7 @@ global:
   resolve_timeout: 5m
 
 route:
-  receiver: default-receiver
+  receiver: soar-webhook
   group_by:
     - alertname
     - instance
@@ -13,6 +13,16 @@ route:
 
 receivers:
   - name: default-receiver
+
+  - name: soar-webhook
+    webhook_configs:
+      - url: http://10.20.20.10:8000/alerts
+        send_resolved: true
+        http_config:
+          http_headers:
+            X-SOAR-Token:
+              files:
+                - /etc/alertmanager/secrets/soar-token
 
 inhibit_rules:
   - source_matchers:

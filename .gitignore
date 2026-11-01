@@ -91,6 +91,11 @@ soar/data/
 soar/logs/
 data/soar/
 
+# SOAR and Alertmanager credentials
+deploy/monitoring/alertmanager/secrets/
+deploy/monitoring/alertmanager/*.pre-soar
+deploy/monitoring/*.pre-soar
+
 # Private keys and certificates
 *.pem
 *.key

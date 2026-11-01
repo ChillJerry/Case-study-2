@@ -53,6 +53,7 @@ services:
       - --config.file=/etc/alertmanager/alertmanager.yml
     volumes:
       - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - ./alertmanager/secrets:/etc/alertmanager/secrets:ro
     networks:
       - monitoring
 

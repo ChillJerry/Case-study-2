@@ -89,6 +89,7 @@ postgres-data/
 # SOAR runtime data
 soar/data/
 soar/logs/
+data/soar/
 
 # Private keys and certificates
 *.pem

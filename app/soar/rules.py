@@ -29,6 +29,14 @@ SUPPORTED_RULES = {
         "severity": "warning",
         "actions": ("record_incident", "notify_operator"),
     },
+    "SuspiciousIPDetected": {
+        "severity": "critical",
+        "actions": (
+            "record_incident",
+            "notify_operator",
+            "simulate_ip_containment",
+        ),
+    },
 }
 
 

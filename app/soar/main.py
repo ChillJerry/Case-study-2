@@ -104,7 +104,7 @@ def receive_alerts():
 
         try:
             executed = actions.execute_actions(
-                decision, status
+                decision, status, alert
             )
             store.mark_processed(key, status)
         except Exception:

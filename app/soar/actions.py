@@ -6,6 +6,7 @@ import os
 from datetime import datetime, timezone
 from pathlib import Path
 
+from app.soar.playbooks.containment_executor import ContainmentExecutor
 from app.soar.rules import Decision
 
 
@@ -20,7 +21,11 @@ def append_jsonl(filename: str, payload: dict) -> None:
         file.write(json.dumps(payload) + "\n")
 
 
-def execute_actions(decision: Decision, status: str) -> list[str]:
+def execute_actions(
+        decision: Decision,
+        status: str,
+        alert: dict | None = None,
+) -> list[str]:
     """Execute the safe actions selected by the rule engine."""
     executed = []
 
@@ -33,7 +38,7 @@ def execute_actions(decision: Decision, status: str) -> list[str]:
         "reason": decision.reason,
     }
 
-    # Audit every accepted event, including unknown alerts.
+    # Audit every accepted event.
     append_jsonl("events.jsonl", event)
 
     for action in decision.actions:
@@ -50,5 +55,35 @@ def execute_actions(decision: Decision, status: str) -> list[str]:
                 ),
             })
             executed.append(action)
+
+        elif action == "simulate_ip_containment":
+            labels = (alert or {}).get("labels", {})
+            source_ip = labels.get("source_ip", "")
+            target = labels.get("target", "")
+
+            # Target authorization comes from server-side configuration.
+            approved_targets = {
+                item.strip()
+                for item in os.environ.get(
+                    "SOAR_APPROVED_CONTAINMENT_TARGETS", ""
+                ).split(",")
+                if item.strip()
+            }
+
+            executor = ContainmentExecutor(
+                str(DATA_DIR / "containment.jsonl")
+            )
+
+            result = executor.execute(
+                source_ip=source_ip,
+                duration_seconds=300,
+                approved_target=(
+                        bool(target) and target in approved_targets
+                ),
+                dry_run=True,
+            )
+
+            if result["status"] == "simulated":
+                executed.append(action)
 
     return executed

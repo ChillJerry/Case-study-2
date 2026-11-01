@@ -77,6 +77,80 @@ class TestSOARAPI(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 400)
 
+    def test_duplicate_alert_is_skipped(self):
+        payload = {
+            "alerts": [{
+                "status": "firing",
+                "fingerprint": "server-123",
+                "startsAt": "2026-11-01T10:00:00Z",
+                "labels": {
+                    "alertname": "ServerDown",
+                    "instance": "10.30.0.20:9100",
+                },
+            }]
+        }
+
+        headers = {"X-SOAR-Token": "test-secret"}
+
+        first = self.client.post(
+            "/alerts", headers=headers, json=payload
+        )
+        second = self.client.post(
+            "/alerts", headers=headers, json=payload
+        )
+
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(second.status_code, 200)
+        self.assertEqual(
+            first.json["results"][0]["status"],
+            "processed",
+        )
+        self.assertEqual(
+            second.json["results"][0]["status"],
+            "duplicate",
+        )
+        self.assertEqual(
+            second.json["results"][0]["actions"],
+            [],
+        )
+
+        notifications = (
+                actions.DATA_DIR / "notifications.jsonl"
+        ).read_text(encoding="utf-8").splitlines()
+
+        self.assertEqual(len(notifications), 1)
+
+    def test_new_alert_occurrence_is_processed(self):
+        headers = {"X-SOAR-Token": "test-secret"}
+
+        def send_alert(start_time):
+            return self.client.post(
+                "/alerts",
+                headers=headers,
+                json={
+                    "alerts": [{
+                        "status": "firing",
+                        "fingerprint": "server-123",
+                        "startsAt": start_time,
+                        "labels": {
+                            "alertname": "ServerDown",
+                            "instance": "10.30.0.20:9100",
+                        },
+                    }]
+                },
+            )
+
+        first = send_alert("2026-11-01T10:00:00Z")
+        second = send_alert("2026-11-01T12:00:00Z")
+
+        self.assertEqual(
+            first.json["results"][0]["status"],
+            "processed",
+        )
+        self.assertEqual(
+            second.json["results"][0]["status"],
+            "processed",
+        )
 
 if __name__ == "__main__":
     unittest.main()

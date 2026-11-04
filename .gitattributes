@@ -1,1 +1,3 @@
 deploy/soar/*.sh text eol=lf
+
+deploy/monitoring/*.sh text eol=lf

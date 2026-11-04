@@ -201,6 +201,6 @@ The current centralized log collection configuration covers the AWS Monitoring s
 
 The Innovatech hybrid monitoring platform successfully detected a simulated on-premises monitoring failure across the WireGuard VPN.
 
-Prometheus transitioned the ServerDown alert from pending to firing, Alertmanager received the critical incident, and the monitoring platform recognized recovery after Node Exporter was restarted.
+Prometheus transitioned the ServerDown alert from pending to firing, Alert~~~~manager received the critical incident, and the monitoring platform recognized recovery after Node Exporter was restarted.
 
 The test demonstrates functional cross-environment monitoring, alert detection, internal alert routing, and recovery verification.

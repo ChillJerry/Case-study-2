@@ -1,0 +1,205 @@
+
+name: Monitoring CI/CD
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "deploy/monitoring/grafana/dashboards/**"
+      - "deploy/monitoring/deploy_dashboards.sh"
+      - ".github/workflows/monitoring-ci-cd.yml"
+
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "deploy/monitoring/grafana/dashboards/**"
+      - "deploy/monitoring/deploy_dashboards.sh"
+      - ".github/workflows/monitoring-ci-cd.yml"
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-dashboards:
+    name: Validate Grafana Dashboards
+    runs-on: [self-hosted, Windows]
+
+    defaults:
+      run:
+        shell: powershell
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate dashboard JSON
+        run: |
+          @'
+          import json
+          from pathlib import Path
+
+          root = Path("deploy/monitoring/grafana/dashboards")
+          names = [
+              "infrastructure-overview.json",
+              "soar-monitoring.json",
+              "security-log-monitoring.json",
+          ]
+
+          uids = set()
+
+          for name in names:
+              path = root / name
+              dashboard = json.loads(path.read_text(encoding="utf-8-sig"))
+
+              if not isinstance(dashboard, dict):
+                  raise ValueError(f"Invalid dashboard: {name}")
+
+              if not dashboard.get("uid"):
+                  raise ValueError(f"Missing dashboard UID: {name}")
+
+              if dashboard["uid"] in uids:
+                  raise ValueError(f"Duplicate dashboard UID: {name}")
+
+              if not isinstance(dashboard.get("panels"), list):
+                  raise ValueError(f"Invalid dashboard panels: {name}")
+
+              uids.add(dashboard["uid"])
+              print(f"Validated {name}: {len(dashboard['panels'])} elements")
+
+          print("All dashboards validated successfully")
+          '@ | py -3.11 -
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "Dashboard validation failed"
+          }
+
+  deploy-dashboards:
+    name: Deploy Grafana Dashboards to AWS
+    needs: validate-dashboards
+    runs-on: [self-hosted, Windows]
+
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+
+    timeout-minutes: 20
+
+    defaults:
+      run:
+        shell: powershell
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy monitoring dashboards
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          $awsProfile = "university"
+          $region = "eu-central-1"
+          $instanceId = "i-0bff5bf5723ea330b"
+          $bucket = "innovatech-cs2-soar-artifacts-898534748807"
+          $releaseId = "${{ github.sha }}"
+
+          $archive = Join-Path $env:RUNNER_TEMP "monitoring-dashboards.zip"
+          $script = "deploy/monitoring/deploy_dashboards.sh"
+
+          $files = @(
+            "deploy/monitoring/grafana/dashboards/infrastructure-overview.json",
+            "deploy/monitoring/grafana/dashboards/soar-monitoring.json",
+            "deploy/monitoring/grafana/dashboards/security-log-monitoring.json"
+          )
+
+          git archive --format=zip "--output=$archive" HEAD $files
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "Unable to create dashboard package"
+          }
+
+          $archiveHash = (Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+          $scriptHash = (Get-FileHash $script -Algorithm SHA256).Hash.ToLowerInvariant()
+
+          $prefix = "monitoring/$releaseId"
+          $archiveUri = "s3://$bucket/$prefix/dashboards.zip"
+          $scriptUri = "s3://$bucket/$prefix/deploy_dashboards.sh"
+
+          aws s3 cp $archive $archiveUri --profile $awsProfile --region $region
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "Dashboard upload failed"
+          }
+
+          aws s3 cp $script $scriptUri --profile $awsProfile --region $region
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "Deployment script upload failed"
+          }
+
+          $commands = @(
+            "set -e",
+            "aws s3 cp '$scriptUri' /tmp/deploy_dashboards.sh --region '$region'",
+            "echo '$scriptHash  /tmp/deploy_dashboards.sh' | sha256sum -c -",
+            "bash /tmp/deploy_dashboards.sh '$archiveUri' '$archiveHash'"
+          )
+
+          $parameterFile = Join-Path $env:RUNNER_TEMP "monitoring-ssm.json"
+
+          @{
+            commands = $commands
+            executionTimeout = @("600")
+          } |
+            ConvertTo-Json -Depth 5 |
+            Set-Content -Encoding ASCII $parameterFile
+
+          $commandId = aws ssm send-command `
+            --instance-ids $instanceId `
+            --document-name AWS-RunShellScript `
+            --parameters "file://$($parameterFile.Replace('\','/'))" `
+            --profile $awsProfile `
+            --region $region `
+            --query "Command.CommandId" `
+            --output text
+
+          if ($LASTEXITCODE -ne 0 -or -not $commandId -or $commandId -eq "None") {
+            throw "Unable to submit SSM deployment"
+          }
+
+          Write-Host "SSM command: $commandId"
+
+          Start-Sleep -Seconds 5
+
+          for ($i = 0; $i -lt 90; $i++) {
+            $result = aws ssm get-command-invocation `
+              --command-id $commandId `
+              --instance-id $instanceId `
+              --profile $awsProfile `
+              --region $region `
+              --output json | ConvertFrom-Json
+
+            if ($LASTEXITCODE -ne 0) {
+              throw "Unable to read deployment status"
+            }
+
+            Write-Host "Deployment status: $($result.Status)"
+
+            if ($result.Status -notin @("Pending", "InProgress", "Delayed")) {
+              break
+            }
+
+            Start-Sleep -Seconds 5
+          }
+
+          Write-Host $result.StandardOutputContent
+
+          if ($result.StandardErrorContent) {
+            Write-Host $result.StandardErrorContent
+          }
+
+          if ($result.Status -ne "Success") {
+            throw "Monitoring deployment failed: $($result.Status)"
+          }
+
+          Write-Host "Monitoring dashboards deployed successfully"

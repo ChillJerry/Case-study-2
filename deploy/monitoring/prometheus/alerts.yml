@@ -28,3 +28,23 @@ groups:
         annotations:
           summary: "High memory usage on {{ $labels.host }}"
           description: "Memory usage has exceeded 90% for five minutes."
+
+  - name: soar-alerts
+    rules:
+      - alert: SOARUnavailable
+        expr: up{job="soar"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "SOAR application is unavailable"
+          description: "Prometheus cannot scrape the SOAR metrics endpoint."
+
+      - alert: SOARProcessingFailures
+        expr: increase(soar_alerts_failed_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "SOAR alert processing failure detected"
+          description: "SOAR has reported processing failures during the last five minutes."

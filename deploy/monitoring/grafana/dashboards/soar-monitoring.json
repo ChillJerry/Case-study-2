@@ -1,0 +1,1543 @@
+{
+    "id":  null,
+    "uid":  "innovatech-soar-security",
+    "title":  "Innovatech | SOAR Security Operations",
+    "description":  "SOAR security monitoring: availability, security events, severity, alert processing, automated responses, action outcomes and processing latency.",
+    "tags":  [
+                 "innovatech",
+                 "soar",
+                 "security",
+                 "operations",
+                 "prometheus"
+             ],
+    "timezone":  "browser",
+    "schemaVersion":  41,
+    "version":  6,
+    "editable":  false,
+    "graphTooltip":  1,
+    "refresh":  "15s",
+    "time":  {
+                 "from":  "now-1h",
+                 "to":  "now"
+             },
+    "timepicker":  {
+                       "refresh_intervals":  [
+                                                 "5s",
+                                                 "15s",
+                                                 "30s",
+                                                 "1m",
+                                                 "5m"
+                                             ]
+                   },
+    "templating":  {
+                       "list":  [
+
+                                ]
+                   },
+    "annotations":  {
+                        "list":  [
+
+                                 ]
+                    },
+    "panels":  [
+                   {
+                       "id":  1,
+                       "type":  "row",
+                       "title":  "01 | SOAR Service Health",
+                       "collapsed":  false,
+                       "gridPos":  {
+                                       "h":  1,
+                                       "w":  24,
+                                       "x":  0,
+                                       "y":  0
+                                   },
+                       "panels":  [
+
+                                  ]
+                   },
+                   {
+                       "id":  2,
+                       "type":  "stat",
+                       "title":  "SOAR Service Status",
+                       "description":  "Shows whether Prometheus can successfully scrape the SOAR metrics endpoint.",
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "gridPos":  {
+                                       "h":  5,
+                                       "w":  6,
+                                       "x":  0,
+                                       "y":  1
+                                   },
+                       "targets":  [
+                                       {
+                                           "expr":  "up{job=\"soar\"}",
+                                           "refId":  "A",
+                                           "legendFormat":  "SOAR",
+                                           "instant":  true,
+                                           "range":  false
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "values":  false,
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  ""
+                                                         },
+                                       "orientation":  "auto",
+                                       "textMode":  "value",
+                                       "colorMode":  "background",
+                                       "graphMode":  "none",
+                                       "justifyMode":  "center"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "displayName":  "SOAR",
+                                                            "min":  0,
+                                                            "max":  1,
+                                                            "mappings":  [
+                                                                             {
+                                                                                 "type":  "value",
+                                                                                 "options":  {
+                                                                                                 "0":  {
+                                                                                                           "text":  "OFFLINE",
+                                                                                                           "color":  "red"
+                                                                                                       },
+                                                                                                 "1":  {
+                                                                                                           "text":  "ONLINE",
+                                                                                                           "color":  "green"
+                                                                                                       }
+                                                                                             }
+                                                                             }
+                                                                         ],
+                                                            "thresholds":  {
+                                                                               "mode":  "absolute",
+                                                                               "steps":  [
+                                                                                             {
+                                                                                                 "color":  "red",
+                                                                                                 "value":  null
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "green",
+                                                                                                 "value":  1
+                                                                                             }
+                                                                                         ]
+                                                                           }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  3,
+                       "type":  "stat",
+                       "title":  "Availability | 24 Hours",
+                       "description":  "Percentage of successful Prometheus scrapes over the last 24 hours. Periods without scrape samples are not included.",
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "gridPos":  {
+                                       "h":  5,
+                                       "w":  6,
+                                       "x":  6,
+                                       "y":  1
+                                   },
+                       "targets":  [
+                                       {
+                                           "expr":  "100 * avg_over_time(up{job=\"soar\"}[24h])",
+                                           "refId":  "A",
+                                           "instant":  true,
+                                           "range":  false
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "values":  false,
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  ""
+                                                         },
+                                       "orientation":  "auto",
+                                       "textMode":  "value",
+                                       "colorMode":  "value",
+                                       "graphMode":  "area"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "percent",
+                                                            "decimals":  2,
+                                                            "min":  0,
+                                                            "max":  100,
+                                                            "thresholds":  {
+                                                                               "mode":  "absolute",
+                                                                               "steps":  [
+                                                                                             {
+                                                                                                 "color":  "red",
+                                                                                                 "value":  null
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "yellow",
+                                                                                                 "value":  95
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "green",
+                                                                                                 "value":  99
+                                                                                             }
+                                                                                         ]
+                                                                           },
+                                                            "color":  {
+                                                                          "mode":  "thresholds"
+                                                                      }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  4,
+                       "type":  "stat",
+                       "title":  "Prometheus Scrape Duration",
+                       "description":  "Time required to retrieve SOAR metrics.",
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "gridPos":  {
+                                       "h":  5,
+                                       "w":  6,
+                                       "x":  12,
+                                       "y":  1
+                                   },
+                       "targets":  [
+                                       {
+                                           "expr":  "scrape_duration_seconds{job=\"soar\"}",
+                                           "refId":  "A",
+                                           "instant":  true,
+                                           "range":  false
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "values":  false,
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  ""
+                                                         },
+                                       "orientation":  "auto",
+                                       "textMode":  "value",
+                                       "colorMode":  "value",
+                                       "graphMode":  "area"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "s",
+                                                            "decimals":  3,
+                                                            "thresholds":  {
+                                                                               "mode":  "absolute",
+                                                                               "steps":  [
+                                                                                             {
+                                                                                                 "color":  "green",
+                                                                                                 "value":  null
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "yellow",
+                                                                                                 "value":  1
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "red",
+                                                                                                 "value":  3
+                                                                                             }
+                                                                                         ]
+                                                                           },
+                                                            "color":  {
+                                                                          "mode":  "thresholds"
+                                                                      }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  5,
+                       "type":  "stat",
+                       "title":  "SOAR Process Memory",
+                       "description":  "Resident memory used by the instrumented Gunicorn worker process, not the entire EC2 instance.",
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "gridPos":  {
+                                       "h":  5,
+                                       "w":  6,
+                                       "x":  18,
+                                       "y":  1
+                                   },
+                       "targets":  [
+                                       {
+                                           "expr":  "process_resident_memory_bytes{job=\"soar\"}",
+                                           "refId":  "A",
+                                           "instant":  true,
+                                           "range":  false
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "values":  false,
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  ""
+                                                         },
+                                       "orientation":  "auto",
+                                       "textMode":  "value",
+                                       "colorMode":  "value",
+                                       "graphMode":  "area"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "bytes",
+                                                            "color":  {
+                                                                          "mode":  "fixed",
+                                                                          "fixedColor":  "blue"
+                                                                      }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  6,
+                       "type":  "timeseries",
+                       "title":  "SOAR Availability Timeline",
+                       "description":  "Timeline of successful and unsuccessful Prometheus scrapes.",
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "gridPos":  {
+                                       "h":  7,
+                                       "w":  24,
+                                       "x":  0,
+                                       "y":  6
+                                   },
+                       "targets":  [
+                                       {
+                                           "expr":  "up{job=\"soar\"}",
+                                           "refId":  "A",
+                                           "legendFormat":  "SOAR availability",
+                                           "instant":  false,
+                                           "range":  true
+                                       }
+                                   ],
+                       "options":  {
+                                       "legend":  {
+                                                      "displayMode":  "list",
+                                                      "placement":  "bottom",
+                                                      "showLegend":  true
+                                                  },
+                                       "tooltip":  {
+                                                       "mode":  "single",
+                                                       "sort":  "none"
+                                                   }
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "min":  0,
+                                                            "max":  1,
+                                                            "unit":  "none",
+                                                            "decimals":  0,
+                                                            "custom":  {
+                                                                           "drawStyle":  "line",
+                                                                           "lineInterpolation":  "stepAfter",
+                                                                           "lineWidth":  2,
+                                                                           "fillOpacity":  15,
+                                                                           "showPoints":  "never",
+                                                                           "spanNulls":  false,
+                                                                           "axisPlacement":  "auto"
+                                                                       },
+                                                            "thresholds":  {
+                                                                               "mode":  "absolute",
+                                                                               "steps":  [
+                                                                                             {
+                                                                                                 "color":  "red",
+                                                                                                 "value":  null
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "green",
+                                                                                                 "value":  1
+                                                                                             }
+                                                                                         ]
+                                                                           }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  7,
+                       "type":  "row",
+                       "title":  "02 | Alert Processing and Reliability",
+                       "collapsed":  false,
+                       "gridPos":  {
+                                       "h":  1,
+                                       "w":  24,
+                                       "x":  0,
+                                       "y":  13
+                                   },
+                       "panels":  [
+
+                                  ]
+                   },
+                   {
+                       "id":  8,
+                       "type":  "stat",
+                       "title":  "Successfully Processed Alerts",
+                       "description":  "Successfully processed nonduplicate alerts since the current SOAR process started.",
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "gridPos":  {
+                                       "h":  5,
+                                       "w":  6,
+                                       "x":  0,
+                                       "y":  14
+                                   },
+                       "targets":  [
+                                       {
+                                           "expr":  "soar_alerts_processed_total{job=\"soar\"}",
+                                           "refId":  "A",
+                                           "instant":  true,
+                                           "range":  false
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "values":  false,
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  ""
+                                                         },
+                                       "orientation":  "auto",
+                                       "textMode":  "value",
+                                       "colorMode":  "value",
+                                       "graphMode":  "area"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "decimals":  0,
+                                                            "color":  {
+                                                                          "mode":  "fixed",
+                                                                          "fixedColor":  "green"
+                                                                      }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  9,
+                       "type":  "stat",
+                       "title":  "Duplicate Alerts Prevented",
+                       "description":  "Number of duplicate webhook alerts skipped by persistent deduplication since the SOAR process started.",
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "gridPos":  {
+                                       "h":  5,
+                                       "w":  6,
+                                       "x":  6,
+                                       "y":  14
+                                   },
+                       "targets":  [
+                                       {
+                                           "expr":  "soar_alerts_duplicate_total{job=\"soar\"}",
+                                           "refId":  "A",
+                                           "instant":  true,
+                                           "range":  false
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "values":  false,
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  ""
+                                                         },
+                                       "orientation":  "auto",
+                                       "textMode":  "value",
+                                       "colorMode":  "value",
+                                       "graphMode":  "area"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "decimals":  0,
+                                                            "color":  {
+                                                                          "mode":  "fixed",
+                                                                          "fixedColor":  "yellow"
+                                                                      }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  10,
+                       "type":  "stat",
+                       "title":  "Alert Processing Failures",
+                       "description":  "Exceptions during SOAR alert processing since the current process started.",
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "gridPos":  {
+                                       "h":  5,
+                                       "w":  6,
+                                       "x":  12,
+                                       "y":  14
+                                   },
+                       "targets":  [
+                                       {
+                                           "expr":  "soar_alerts_failed_total{job=\"soar\"}",
+                                           "refId":  "A",
+                                           "instant":  true,
+                                           "range":  false
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "values":  false,
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  ""
+                                                         },
+                                       "orientation":  "auto",
+                                       "textMode":  "value",
+                                       "colorMode":  "background",
+                                       "graphMode":  "area"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "decimals":  0,
+                                                            "thresholds":  {
+                                                                               "mode":  "absolute",
+                                                                               "steps":  [
+                                                                                             {
+                                                                                                 "color":  "green",
+                                                                                                 "value":  null
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "red",
+                                                                                                 "value":  1
+                                                                                             }
+                                                                                         ]
+                                                                           }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  11,
+                       "type":  "stat",
+                       "title":  "Processed Alerts | Last Hour",
+                       "description":  "Increase in successfully processed alerts over the last hour, with counter resets handled by Prometheus.",
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "gridPos":  {
+                                       "h":  5,
+                                       "w":  6,
+                                       "x":  18,
+                                       "y":  14
+                                   },
+                       "targets":  [
+                                       {
+                                           "expr":  "increase(soar_alerts_processed_total{job=\"soar\"}[1h])",
+                                           "refId":  "A",
+                                           "instant":  true,
+                                           "range":  false
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "values":  false,
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  ""
+                                                         },
+                                       "orientation":  "auto",
+                                       "textMode":  "value",
+                                       "colorMode":  "value",
+                                       "graphMode":  "area"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "none",
+                                                            "decimals":  1,
+                                                            "color":  {
+                                                                          "mode":  "fixed",
+                                                                          "fixedColor":  "blue"
+                                                                      }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  12,
+                       "type":  "timeseries",
+                       "title":  "Alert Processing Throughput | Events per Minute",
+                       "description":  "Processed, duplicate and failed alert rates. Rates are estimated from the Prometheus counters.",
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "gridPos":  {
+                                       "h":  9,
+                                       "w":  16,
+                                       "x":  0,
+                                       "y":  19
+                                   },
+                       "targets":  [
+                                       {
+                                           "expr":  "60 * rate(soar_alerts_processed_total{job=\"soar\"}[5m])",
+                                           "refId":  "A",
+                                           "legendFormat":  "Processed / min",
+                                           "instant":  false,
+                                           "range":  true
+                                       },
+                                       {
+                                           "expr":  "60 * rate(soar_alerts_duplicate_total{job=\"soar\"}[5m])",
+                                           "refId":  "B",
+                                           "legendFormat":  "Duplicates / min",
+                                           "instant":  false,
+                                           "range":  true
+                                       },
+                                       {
+                                           "expr":  "60 * rate(soar_alerts_failed_total{job=\"soar\"}[5m])",
+                                           "refId":  "C",
+                                           "legendFormat":  "Failures / min",
+                                           "instant":  false,
+                                           "range":  true
+                                       }
+                                   ],
+                       "options":  {
+                                       "legend":  {
+                                                      "displayMode":  "table",
+                                                      "placement":  "bottom",
+                                                      "showLegend":  true,
+                                                      "calcs":  [
+                                                                    "lastNotNull",
+                                                                    "max"
+                                                                ]
+                                                  },
+                                       "tooltip":  {
+                                                       "mode":  "multi",
+                                                       "sort":  "desc"
+                                                   }
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "none",
+                                                            "min":  0,
+                                                            "decimals":  2,
+                                                            "custom":  {
+                                                                           "drawStyle":  "line",
+                                                                           "lineInterpolation":  "smooth",
+                                                                           "lineWidth":  2,
+                                                                           "fillOpacity":  14,
+                                                                           "showPoints":  "never",
+                                                                           "spanNulls":  false,
+                                                                           "axisPlacement":  "auto"
+                                                                       }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  13,
+                       "type":  "stat",
+                       "title":  "Alert Processing Failure Rate | 1 Hour",
+                       "description":  "Ratio of failed processing attempts to successful and failed processing attempts in the last hour. Duplicates are excluded.",
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "gridPos":  {
+                                       "h":  9,
+                                       "w":  8,
+                                       "x":  16,
+                                       "y":  19
+                                   },
+                       "targets":  [
+                                       {
+                                           "expr":  "100 * increase(soar_alerts_failed_total{job=\"soar\"}[1h]) / clamp_min(increase(soar_alerts_failed_total{job=\"soar\"}[1h]) + increase(soar_alerts_processed_total{job=\"soar\"}[1h]), 1)",
+                                           "refId":  "A",
+                                           "instant":  true,
+                                           "range":  false
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "values":  false,
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  ""
+                                                         },
+                                       "orientation":  "auto",
+                                       "textMode":  "value",
+                                       "colorMode":  "background",
+                                       "graphMode":  "area"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "percent",
+                                                            "decimals":  2,
+                                                            "min":  0,
+                                                            "max":  100,
+                                                            "thresholds":  {
+                                                                               "mode":  "absolute",
+                                                                               "steps":  [
+                                                                                             {
+                                                                                                 "color":  "green",
+                                                                                                 "value":  null
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "yellow",
+                                                                                                 "value":  1
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "red",
+                                                                                                 "value":  5
+                                                                                             }
+                                                                                         ]
+                                                                           }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  14,
+                       "type":  "row",
+                       "title":  "03 | Security Response and Automated Actions",
+                       "collapsed":  false,
+                       "gridPos":  {
+                                       "h":  1,
+                                       "w":  24,
+                                       "x":  0,
+                                       "y":  28
+                                   },
+                       "panels":  [
+
+                                  ]
+                   },
+                   {
+                       "id":  15,
+                       "type":  "timeseries",
+                       "title":  "SOAR Actions by Type",
+                       "description":  "Cumulative actions reported by the SOAR action executor. Simulated containment is not live enforcement.",
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "gridPos":  {
+                                       "h":  9,
+                                       "w":  16,
+                                       "x":  0,
+                                       "y":  29
+                                   },
+                       "targets":  [
+                                       {
+                                           "expr":  "sum by (action_type) (soar_actions_total{job=\"soar\"})",
+                                           "refId":  "A",
+                                           "legendFormat":  "{{action_type}}",
+                                           "instant":  false,
+                                           "range":  true
+                                       }
+                                   ],
+                       "options":  {
+                                       "legend":  {
+                                                      "displayMode":  "table",
+                                                      "placement":  "bottom",
+                                                      "showLegend":  true,
+                                                      "calcs":  [
+                                                                    "lastNotNull"
+                                                                ]
+                                                  },
+                                       "tooltip":  {
+                                                       "mode":  "multi",
+                                                       "sort":  "desc"
+                                                   }
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "none",
+                                                            "decimals":  0,
+                                                            "min":  0,
+                                                            "custom":  {
+                                                                           "drawStyle":  "line",
+                                                                           "lineInterpolation":  "stepAfter",
+                                                                           "lineWidth":  2,
+                                                                           "fillOpacity":  12,
+                                                                           "showPoints":  "auto",
+                                                                           "spanNulls":  false,
+                                                                           "axisPlacement":  "auto"
+                                                                       }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  16,
+                       "type":  "stat",
+                       "title":  "Total Recorded Actions",
+                       "description":  "Sum of reported action completions across all action types since process startup.",
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "gridPos":  {
+                                       "h":  9,
+                                       "w":  8,
+                                       "x":  16,
+                                       "y":  29
+                                   },
+                       "targets":  [
+                                       {
+                                           "expr":  "sum(soar_actions_total{job=\"soar\"}) or on() vector(0)",
+                                           "refId":  "A",
+                                           "instant":  true,
+                                           "range":  false
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "values":  false,
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  ""
+                                                         },
+                                       "orientation":  "auto",
+                                       "textMode":  "value",
+                                       "colorMode":  "value",
+                                       "graphMode":  "area"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "none",
+                                                            "decimals":  0,
+                                                            "color":  {
+                                                                          "mode":  "fixed",
+                                                                          "fixedColor":  "blue"
+                                                                      }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  17,
+                       "type":  "barchart",
+                       "title":  "Action Distribution",
+                       "description":  "Current counter totals grouped by the action types returned by SOAR.",
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "gridPos":  {
+                                       "h":  9,
+                                       "w":  12,
+                                       "x":  0,
+                                       "y":  38
+                                   },
+                       "targets":  [
+                                       {
+                                           "expr":  "sum by (action_type) (soar_actions_total{job=\"soar\"})",
+                                           "refId":  "A",
+                                           "legendFormat":  "{{action_type}}",
+                                           "instant":  true,
+                                           "range":  false,
+                                           "format":  "table"
+                                       }
+                                   ],
+                       "options":  {
+                                       "orientation":  "horizontal",
+                                       "xTickLabelRotation":  0,
+                                       "xTickLabelSpacing":  0,
+                                       "showValue":  "always",
+                                       "stacking":  "none",
+                                       "groupWidth":  0.7,
+                                       "barWidth":  0.9,
+                                       "legend":  {
+                                                      "displayMode":  "list",
+                                                      "placement":  "bottom",
+                                                      "showLegend":  false
+                                                  },
+                                       "tooltip":  {
+                                                       "mode":  "single"
+                                                   }
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "none",
+                                                            "decimals":  0,
+                                                            "color":  {
+                                                                          "mode":  "palette-classic"
+                                                                      }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  20,
+                       "type":  "stat",
+                       "title":  "Incidents Recorded",
+                       "description":  "Count of record_incident actions reported since SOAR process startup.",
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "gridPos":  {
+                                       "h":  5,
+                                       "w":  6,
+                                       "x":  12,
+                                       "y":  42
+                                   },
+                       "targets":  [
+                                       {
+                                           "expr":  "soar_actions_total{job=\"soar\",action_type=\"record_incident\"} or on() vector(0)",
+                                           "refId":  "A",
+                                           "instant":  true,
+                                           "range":  false
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "values":  false,
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  ""
+                                                         },
+                                       "colorMode":  "value",
+                                       "graphMode":  "none",
+                                       "textMode":  "value"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "decimals":  0,
+                                                            "color":  {
+                                                                          "mode":  "fixed",
+                                                                          "fixedColor":  "green"
+                                                                      }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  21,
+                       "type":  "stat",
+                       "title":  "Operator Notifications Prepared",
+                       "description":  "Count of notify_operator actions. This counts generated notification records, not verified delivery to a human.",
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "gridPos":  {
+                                       "h":  5,
+                                       "w":  6,
+                                       "x":  18,
+                                       "y":  42
+                                   },
+                       "targets":  [
+                                       {
+                                           "expr":  "soar_actions_total{job=\"soar\",action_type=\"notify_operator\"} or on() vector(0)",
+                                           "refId":  "A",
+                                           "instant":  true,
+                                           "range":  false
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "values":  false,
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  ""
+                                                         },
+                                       "colorMode":  "value",
+                                       "graphMode":  "none",
+                                       "textMode":  "value"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "decimals":  0,
+                                                            "color":  {
+                                                                          "mode":  "fixed",
+                                                                          "fixedColor":  "blue"
+                                                                      }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  22,
+                       "type":  "row",
+                       "title":  "04 | Security Event Intelligence",
+                       "collapsed":  false,
+                       "gridPos":  {
+                                       "h":  1,
+                                       "w":  24,
+                                       "x":  0,
+                                       "y":  47
+                                   },
+                       "panels":  [
+
+                                  ]
+                   },
+                   {
+                       "id":  23,
+                       "type":  "text",
+                       "title":  "Security Monitoring Coverage",
+                       "gridPos":  {
+                                       "h":  5,
+                                       "w":  24,
+                                       "x":  0,
+                                       "y":  48
+                                   },
+                       "options":  {
+                                       "mode":  "markdown",
+                                       "content":  "### Security intelligence is operational\n\nThe SOAR application now classifies security alerts by event type and severity, records local action outcomes, and measures processing duration.\n\n**Verified:** A SuspiciousIPDetected test alert was classified as critical. SOAR recorded the incident and prepared an operator notification.\n\n**Security controls:** Automatic IP and service containment remain dry-run only. Simulated, rejected, successful and failed action outcomes are tracked separately.\n\n**Still to complete:** Verified Linux authentication/system log ingestion, firewall log ingestion, and security detection rules using Loki."
+                                   }
+                   },
+                   {
+                       "id":  24,
+                       "type":  "barchart",
+                       "title":  "Security Events by Type",
+                       "description":  "Successfully processed security events grouped by classification since the current SOAR process started.",
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  12,
+                                       "x":  0,
+                                       "y":  53
+                                   },
+                       "targets":  [
+                                       {
+                                           "expr":  "sum by (event_type) (soar_security_events_total{job=\"soar\"})",
+                                           "refId":  "A",
+                                           "legendFormat":  "{{event_type}}",
+                                           "instant":  true,
+                                           "range":  false,
+                                           "format":  "table"
+                                       }
+                                   ],
+                       "options":  {
+                                       "orientation":  "horizontal",
+                                       "xTickLabelRotation":  0,
+                                       "xTickLabelSpacing":  0,
+                                       "showValue":  "always",
+                                       "stacking":  "none",
+                                       "groupWidth":  0.7,
+                                       "barWidth":  0.9,
+                                       "legend":  {
+                                                      "displayMode":  "list",
+                                                      "placement":  "bottom",
+                                                      "showLegend":  false
+                                                  },
+                                       "tooltip":  {
+                                                       "mode":  "single"
+                                                   }
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "none",
+                                                            "decimals":  0,
+                                                            "color":  {
+                                                                          "mode":  "palette-classic"
+                                                                      }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  25,
+                       "type":  "barchart",
+                       "title":  "Security Event Severity",
+                       "description":  "Successfully processed security events grouped by severity since the current SOAR process started.",
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  12,
+                                       "x":  12,
+                                       "y":  53
+                                   },
+                       "targets":  [
+                                       {
+                                           "expr":  "sum by (severity) (soar_security_events_total{job=\"soar\"})",
+                                           "refId":  "A",
+                                           "legendFormat":  "{{severity}}",
+                                           "instant":  true,
+                                           "range":  false,
+                                           "format":  "table"
+                                       }
+                                   ],
+                       "options":  {
+                                       "orientation":  "horizontal",
+                                       "xTickLabelRotation":  0,
+                                       "xTickLabelSpacing":  0,
+                                       "showValue":  "always",
+                                       "stacking":  "none",
+                                       "groupWidth":  0.7,
+                                       "barWidth":  0.9,
+                                       "legend":  {
+                                                      "displayMode":  "list",
+                                                      "placement":  "bottom",
+                                                      "showLegend":  false
+                                                  },
+                                       "tooltip":  {
+                                                       "mode":  "single"
+                                                   }
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "none",
+                                                            "decimals":  0,
+                                                            "color":  {
+                                                                          "mode":  "palette-classic"
+                                                                      }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  26,
+                       "type":  "row",
+                       "title":  "05 | Response Performance and Action Outcomes",
+                       "collapsed":  false,
+                       "gridPos":  {
+                                       "h":  1,
+                                       "w":  24,
+                                       "x":  0,
+                                       "y":  61
+                                   },
+                       "panels":  [
+
+                                  ]
+                   },
+                   {
+                       "id":  27,
+                       "type":  "stat",
+                       "title":  "Successful Action Outcomes",
+                       "description":  "Successfully completed local response actions. Notification preparation does not prove external delivery.",
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "gridPos":  {
+                                       "h":  5,
+                                       "w":  8,
+                                       "x":  0,
+                                       "y":  62
+                                   },
+                       "targets":  [
+                                       {
+                                           "expr":  "sum(soar_action_outcomes_total{job=\"soar\",outcome=\"success\"})",
+                                           "refId":  "A",
+                                           "instant":  true,
+                                           "range":  false
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "values":  false,
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  ""
+                                                         },
+                                       "colorMode":  "value",
+                                       "graphMode":  "none",
+                                       "textMode":  "value"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "decimals":  0,
+                                                            "color":  {
+                                                                          "mode":  "fixed",
+                                                                          "fixedColor":  "green"
+                                                                      }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  28,
+                       "type":  "stat",
+                       "title":  "Failed Action Outcomes",
+                       "description":  "Failed response actions. No data means no failed-action series has been emitted.",
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "gridPos":  {
+                                       "h":  5,
+                                       "w":  8,
+                                       "x":  8,
+                                       "y":  62
+                                   },
+                       "targets":  [
+                                       {
+                                           "expr":  "sum(soar_action_outcomes_total{job=\"soar\",outcome=\"failed\"})",
+                                           "refId":  "A",
+                                           "instant":  true,
+                                           "range":  false
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "values":  false,
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  ""
+                                                         },
+                                       "colorMode":  "value",
+                                       "graphMode":  "none",
+                                       "textMode":  "value"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "decimals":  0,
+                                                            "thresholds":  {
+                                                                               "mode":  "absolute",
+                                                                               "steps":  [
+                                                                                             {
+                                                                                                 "color":  "green",
+                                                                                                 "value":  null
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "red",
+                                                                                                 "value":  1
+                                                                                             }
+                                                                                         ]
+                                                                           }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  29,
+                       "type":  "stat",
+                       "title":  "P95 Alert Processing Duration",
+                       "description":  "95th percentile SOAR alert processing duration calculated from the Prometheus histogram.",
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "gridPos":  {
+                                       "h":  5,
+                                       "w":  8,
+                                       "x":  16,
+                                       "y":  62
+                                   },
+                       "targets":  [
+                                       {
+                                           "expr":  "histogram_quantile(0.95, sum by (le) (rate(soar_alert_processing_duration_seconds_bucket{job=\"soar\"}[5m])))",
+                                           "refId":  "A",
+                                           "instant":  true,
+                                           "range":  false
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "values":  false,
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  ""
+                                                         },
+                                       "colorMode":  "value",
+                                       "graphMode":  "none",
+                                       "textMode":  "value"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "s",
+                                                            "decimals":  3,
+                                                            "color":  {
+                                                                          "mode":  "fixed",
+                                                                          "fixedColor":  "blue"
+                                                                      }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  30,
+                       "type":  "timeseries",
+                       "title":  "Action Outcomes Over Time",
+                       "description":  "Cumulative outcomes by result: success, simulated, rejected or failed. Counters reset on SOAR restart.",
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "gridPos":  {
+                                       "h":  9,
+                                       "w":  12,
+                                       "x":  0,
+                                       "y":  67
+                                   },
+                       "targets":  [
+                                       {
+                                           "expr":  "sum by (outcome) (soar_action_outcomes_total{job=\"soar\"})",
+                                           "refId":  "A",
+                                           "legendFormat":  "{{outcome}}",
+                                           "instant":  false,
+                                           "range":  true
+                                       }
+                                   ],
+                       "options":  {
+                                       "legend":  {
+                                                      "displayMode":  "list",
+                                                      "placement":  "bottom",
+                                                      "showLegend":  true
+                                                  },
+                                       "tooltip":  {
+                                                       "mode":  "multi"
+                                                   }
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "min":  0,
+                                                            "custom":  {
+                                                                           "drawStyle":  "line",
+                                                                           "lineWidth":  2,
+                                                                           "fillOpacity":  15,
+                                                                           "showPoints":  "never"
+                                                                       }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  31,
+                       "type":  "timeseries",
+                       "title":  "SOAR Processing Latency",
+                       "description":  "P50 and P95 SOAR alert processing latency over time.",
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "gridPos":  {
+                                       "h":  9,
+                                       "w":  12,
+                                       "x":  12,
+                                       "y":  67
+                                   },
+                       "targets":  [
+                                       {
+                                           "expr":  "histogram_quantile(0.50, sum by (le) (rate(soar_alert_processing_duration_seconds_bucket{job=\"soar\"}[5m])))",
+                                           "refId":  "A",
+                                           "legendFormat":  "P50",
+                                           "instant":  false,
+                                           "range":  true
+                                       },
+                                       {
+                                           "expr":  "histogram_quantile(0.95, sum by (le) (rate(soar_alert_processing_duration_seconds_bucket{job=\"soar\"}[5m])))",
+                                           "refId":  "B",
+                                           "legendFormat":  "P95",
+                                           "instant":  false,
+                                           "range":  true
+                                       }
+                                   ],
+                       "options":  {
+                                       "legend":  {
+                                                      "displayMode":  "list",
+                                                      "placement":  "bottom",
+                                                      "showLegend":  true
+                                                  },
+                                       "tooltip":  {
+                                                       "mode":  "multi"
+                                                   }
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "s",
+                                                            "min":  0,
+                                                            "custom":  {
+                                                                           "drawStyle":  "line",
+                                                                           "lineWidth":  2,
+                                                                           "fillOpacity":  10,
+                                                                           "showPoints":  "never"
+                                                                       }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  34,
+                       "type":  "stat",
+                       "title":  "Simulated Responses",
+                       "description":  "Dry-run containment actions. No actual firewall or service containment is implied.",
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "gridPos":  {
+                                       "h":  5,
+                                       "w":  12,
+                                       "x":  0,
+                                       "y":  76
+                                   },
+                       "targets":  [
+                                       {
+                                           "expr":  "sum(soar_action_outcomes_total{job=\"soar\",outcome=\"simulated\"})",
+                                           "refId":  "A",
+                                           "instant":  true,
+                                           "range":  false
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "values":  false,
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  ""
+                                                         },
+                                       "orientation":  "auto",
+                                       "textMode":  "value",
+                                       "colorMode":  "value",
+                                       "graphMode":  "area"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "decimals":  0,
+                                                            "color":  {
+                                                                          "mode":  "fixed",
+                                                                          "fixedColor":  "yellow"
+                                                                      }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   },
+                   {
+                       "id":  35,
+                       "type":  "stat",
+                       "title":  "Rejected Responses",
+                       "description":  "Actions rejected by the response executor, including unsuccessful containment authorization checks.",
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "prometheus"
+                                      },
+                       "gridPos":  {
+                                       "h":  5,
+                                       "w":  12,
+                                       "x":  12,
+                                       "y":  76
+                                   },
+                       "targets":  [
+                                       {
+                                           "expr":  "sum(soar_action_outcomes_total{job=\"soar\",outcome=\"rejected\"})",
+                                           "refId":  "A",
+                                           "instant":  true,
+                                           "range":  false
+                                       }
+                                   ],
+                       "options":  {
+                                       "reduceOptions":  {
+                                                             "values":  false,
+                                                             "calcs":  [
+                                                                           "lastNotNull"
+                                                                       ],
+                                                             "fields":  ""
+                                                         },
+                                       "orientation":  "auto",
+                                       "textMode":  "value",
+                                       "colorMode":  "background",
+                                       "graphMode":  "none"
+                                   },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "decimals":  0,
+                                                            "thresholds":  {
+                                                                               "mode":  "absolute",
+                                                                               "steps":  [
+                                                                                             {
+                                                                                                 "color":  "green",
+                                                                                                 "value":  null
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "yellow",
+                                                                                                 "value":  1
+                                                                                             }
+                                                                                         ]
+                                                                           }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       }
+                   }
+               ]
+}

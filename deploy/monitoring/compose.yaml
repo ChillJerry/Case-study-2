@@ -20,6 +20,8 @@ services:
     image: grafana/loki:3.5.5
     restart: unless-stopped
     command: -config.file=/etc/loki/loki.yaml
+    ports:
+      - "10.20.10.10:3100:3100"
     volumes:
       - ./loki/loki.yaml:/etc/loki/loki.yaml:ro
       - loki-data:/loki

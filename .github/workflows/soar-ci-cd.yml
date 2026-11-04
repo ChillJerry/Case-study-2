@@ -1,0 +1,90 @@
+
+name: SOAR CI/CD
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "app/soar/**"
+      - "tests/soar/**"
+      - "deploy/soar/**"
+      - ".github/workflows/soar-ci-cd.yml"
+
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "app/soar/**"
+      - "tests/soar/**"
+      - "deploy/soar/**"
+      - ".github/workflows/soar-ci-cd.yml"
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  soar-tests:
+    name: Test SOAR Application
+    runs-on: [self-hosted, Windows]
+
+    defaults:
+      run:
+        shell: powershell
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check Python version
+        run: |
+          py --version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Create isolated Python environment
+        run: |
+          py -3.11 -m venv .venv-ci
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Install SOAR dependencies
+        run: |
+          & ".\.venv-ci\Scripts\python.exe" -m pip install -r app/soar/requirements.txt pytest
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Validate Python syntax
+        run: |
+          & ".\.venv-ci\Scripts\python.exe" -m compileall -q app/soar
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Run SOAR unit and integration tests
+        run: |
+          & ".\.venv-ci\Scripts\python.exe" -m pytest tests/soar -v
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Verify SOAR package contents
+        run: |
+          $required = @(
+            "app/soar/main.py",
+            "app/soar/rules.py",
+            "app/soar/actions.py",
+            "app/soar/dedup.py",
+            "app/soar/metrics.py",
+            "app/soar/requirements.txt"
+          )
+
+          foreach ($file in $required) {
+            if (-not (Test-Path $file)) {
+              throw "Missing required file: $file"
+            }
+          }
+
+          $playbooks = @(Get-ChildItem app/soar/playbooks -Filter "*.py" -File)
+
+          if ($playbooks.Count -eq 0) {
+            throw "No SOAR playbook modules found"
+          }
+
+          Write-Host "SOAR source validation passed"
+          Write-Host "Playbook modules found: $($playbooks.Count)"

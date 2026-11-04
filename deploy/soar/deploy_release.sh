@@ -1,9 +1,5 @@
 
-#!/usr/bin/env bash
 set -Eeuo pipefail
-
-# Deploy a tested SOAR release from S3.
-# Run as root through AWS Systems Manager.
 
 BASE="/opt/innovatech/soar"
 APP_DIR="$BASE/repo"
@@ -102,8 +98,16 @@ if [[ ! -d "$STAGING/app/soar/playbooks" ]]; then
     exit 1
 fi
 
-# Do not silently change dependencies in the existing venv.
-if ! cmp -s \
+
+if ! python3 -c '
+import pathlib
+import sys
+
+old = pathlib.Path(sys.argv[1]).read_text().splitlines()
+new = pathlib.Path(sys.argv[2]).read_text().splitlines()
+
+sys.exit(0 if old == new else 1)
+' \
     "$APP_DIR/app/soar/requirements.txt" \
     "$STAGING/app/soar/requirements.txt"
 then
@@ -112,7 +116,6 @@ then
     exit 1
 fi
 
-# Make sure the service can read the deployed source.
 chmod -R a+rX "$STAGING"
 
 echo "Creating release backup..."

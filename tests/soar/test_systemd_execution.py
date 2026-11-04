@@ -1,5 +1,4 @@
 
-"""Tests for restricted systemd execution planning."""
 
 import unittest
 from datetime import datetime, timezone

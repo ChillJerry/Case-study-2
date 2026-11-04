@@ -1,13 +1,9 @@
-
-"""SOAR event classification and response selection."""
-
 from dataclasses import dataclass
 from typing import Any
 
 
 @dataclass(frozen=True)
 class Decision:
-    """Result of evaluating a monitoring event."""
 
     event_type: str
     severity: str
@@ -49,7 +45,6 @@ SUPPORTED_RULES = {
 
 
 def evaluate_event(alert: dict[str, Any]) -> Decision:
-    """Evaluate an Alertmanager alert and select safe actions."""
 
     labels = alert.get("labels", {})
 

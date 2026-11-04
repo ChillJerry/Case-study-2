@@ -1,8 +1,4 @@
 
-"""Safety checks before scheduling live service recovery.
-
-No operating-system commands are executed here.
-"""
 
 from dataclasses import dataclass
 from datetime import datetime, timezone

@@ -1,16 +1,25 @@
 
-"""HTTP API for receiving monitoring alerts."""
 
 import hashlib
 import json
 import os
+import time
 from hmac import compare_digest
 
-from flask import Flask, jsonify, request
+from flask import Flask, Response, jsonify, request
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 from app.soar import actions
 from app.soar.dedup import AlertStore
-from app.soar.rules import evaluate_event
+from app.soar.metrics import (
+    actions_total,
+    alerts_duplicates,
+    alerts_failed,
+    alerts_processed,
+    alert_processing_duration,
+    security_events,
+)
+from app.soar.rules import SUPPORTED_RULES, evaluate_event
 
 
 app = Flask(__name__)
@@ -18,7 +27,6 @@ app.config["MAX_CONTENT_LENGTH"] = 1024 * 1024
 
 
 def alert_key(alert):
-    """Identify an alert occurrence across webhook deliveries."""
     labels = alert["labels"]
 
     identity = {
@@ -34,12 +42,31 @@ def alert_key(alert):
     return hashlib.sha256(encoded).hexdigest()
 
 
+def metric_event_type(event_type: str) -> str:
+    if event_type in SUPPORTED_RULES:
+        return event_type
+    return "Other"
+
+
+def metric_severity(severity: str) -> str:
+    allowed = {"critical", "warning", "info"}
+    return severity if severity in allowed else "info"
+
+
 @app.get("/health")
 def health():
     return jsonify({
         "status": "healthy",
         "service": "innovatech-soar",
     })
+
+
+@app.get("/metrics")
+def metrics():
+    return Response(
+        generate_latest(),
+        content_type=CONTENT_TYPE_LATEST,
+    )
 
 
 @app.post("/alerts")
@@ -68,6 +95,7 @@ def receive_alerts():
             "error": "Expected 1 to 100 alerts"
         }), 400
 
+    
     validated = []
 
     for alert in alerts:
@@ -90,38 +118,73 @@ def receive_alerts():
     processed = []
 
     for alert, decision in validated:
-        status = alert.get("status", "firing")
-        key = alert_key(alert)
+        started = time.perf_counter()
 
-        if store.is_processed(key, status):
+        try:
+            status = alert.get("status", "firing")
+            key = alert_key(alert)
+
+            if store.is_processed(key, status):
+                alerts_duplicates.inc()
+
+                processed.append({
+                    "event_type": decision.event_type,
+                    "host": decision.host,
+                    "status": "duplicate",
+                    "actions": [],
+                })
+                continue
+
+            try:
+                executed = actions.execute_actions(
+                    decision, status, alert
+                )
+
+                store.mark_processed(key, status)
+
+            except Exception:
+                alerts_failed.inc()
+
+                app.logger.exception(
+                    "Failed to process SOAR alert"
+                )
+
+                return jsonify({
+                    "error": "Alert processing failed"
+                }), 500
+
+            
+            alerts_processed.inc()
+
+            
+            security_events.labels(
+                event_type=metric_event_type(
+                    decision.event_type
+                ),
+                severity=metric_severity(
+                    decision.severity
+                ),
+            ).inc()
+
+            
+            
+            for action in executed:
+                actions_total.labels(
+                    action_type=action
+                ).inc()
+
             processed.append({
                 "event_type": decision.event_type,
                 "host": decision.host,
-                "status": "duplicate",
-                "actions": [],
+                "status": "processed",
+                "severity": decision.severity,
+                "actions": executed,
             })
-            continue
 
-        try:
-            executed = actions.execute_actions(
-                decision, status, alert
+        finally:
+            alert_processing_duration.observe(
+                time.perf_counter() - started
             )
-            store.mark_processed(key, status)
-        except Exception:
-            app.logger.exception(
-                "Failed to process SOAR alert"
-            )
-            return jsonify({
-                "error": "Alert processing failed"
-            }), 500
-
-        processed.append({
-            "event_type": decision.event_type,
-            "host": decision.host,
-            "status": "processed",
-            "severity": decision.severity,
-            "actions": executed,
-        })
 
     return jsonify({
         "status": "completed",

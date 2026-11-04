@@ -1,9 +1,3 @@
-
-"""Safe dry-run execution of IP containment playbooks.
-
-No firewall or network changes are performed.
-"""
-
 import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -30,7 +24,6 @@ class ContainmentExecutor:
             dry_run: bool = True,
             now: datetime | None = None,
     ) -> dict:
-        """Evaluate and simulate an authorized containment request."""
 
         timestamp = now or datetime.now(timezone.utc)
 

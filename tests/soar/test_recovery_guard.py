@@ -1,5 +1,4 @@
 
-"""Unit tests for recovery deadline safety."""
 
 import unittest
 from datetime import datetime, timezone, timedelta

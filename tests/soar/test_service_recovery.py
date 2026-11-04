@@ -1,5 +1,4 @@
 
-"""Tests for the disposable service recovery planner."""
 
 import unittest
 from datetime import datetime, timezone

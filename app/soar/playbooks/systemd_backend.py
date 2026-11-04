@@ -1,9 +1,4 @@
 
-"""Restricted systemd backend for disposable SOAR service testing.
-
-Only read-only systemd inspection is implemented.
-No containment or timer modification is permitted.
-"""
 
 import subprocess
 from typing import Callable
@@ -51,7 +46,7 @@ class SystemdBackend:
     def recovery_pending(self) -> bool:
         state = self._check_unit(RESTORE_TIMER)
 
-        # Fail closed when timer state is uncertain.
+        
         if state != "inactive":
             return True
 
@@ -67,7 +62,6 @@ class SystemdBackend:
 
 
     def verify_recovery(self, deadline: str) -> bool:
-        """Check the real systemd timer against an expected UTC deadline."""
 
         if self._check_unit(RESTORE_TIMER) != "active":
             return False

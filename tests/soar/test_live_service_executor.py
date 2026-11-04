@@ -1,5 +1,4 @@
 
-"""Test containment sequencing without modifying real services."""
 
 import tempfile
 import unittest

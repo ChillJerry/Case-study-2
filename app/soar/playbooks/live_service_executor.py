@@ -1,10 +1,3 @@
-
-"""Orchestrate disposable service containment.
-
-The backend is injected. This module does not invoke systemctl
-or grant privileges to the SOAR web application.
-"""
-
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Protocol
@@ -42,7 +35,7 @@ def contain_demo_service(
         duration_seconds: int = 90,
         now: datetime | None = None,
 ) -> ExecutionResult:
-    """Execute a fixed, authorized administrator test operation."""
+
 
     policy = validate_privileged_request(
         "contain", "soar-demo.service", duration_seconds
@@ -55,7 +48,6 @@ def contain_demo_service(
         with lock.hold():
             timestamp = now or datetime.now(timezone.utc)
 
-            # The actual backend must inspect systemd, not trust alerts.
             if backend.recovery_pending():
                 return ExecutionResult(
                     "rejected", "Recovery already pending."
@@ -77,7 +69,7 @@ def contain_demo_service(
             if not safety.approved:
                 return ExecutionResult("rejected", safety.reason)
 
-            # Recovery must be installed and verified first.
+
             backend.schedule_recovery(plan.deadline)
 
             if not backend.verify_recovery(plan.deadline):
@@ -91,8 +83,7 @@ def contain_demo_service(
             try:
                 backend.stop_demo_service()
             except Exception:
-                # Best-effort immediate restoration.
-                # Scheduled recovery remains in place.
+
                 try:
                     backend.start_demo_service()
                 except Exception:

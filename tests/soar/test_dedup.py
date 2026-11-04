@@ -1,5 +1,4 @@
 
-"""Tests for persistent alert deduplication."""
 
 import tempfile
 import unittest

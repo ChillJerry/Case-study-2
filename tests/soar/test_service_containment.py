@@ -1,5 +1,4 @@
 
-"""Tests for suspicious-service containment."""
 
 import json
 import os

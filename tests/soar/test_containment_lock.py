@@ -1,5 +1,4 @@
 
-"""Tests for exclusive containment operation locking."""
 
 import tempfile
 import unittest

@@ -1,8 +1,4 @@
 
-"""Build a restricted systemd execution plan.
-
-This module never executes operating-system commands.
-"""
 
 from dataclasses import dataclass
 from datetime import datetime
@@ -28,7 +24,6 @@ class SystemdExecutionPlan:
 
 
 def build_execution_plan(plan: RecoveryPlan) -> SystemdExecutionPlan:
-    """Translate a validated recovery plan into restricted commands."""
 
     rejected = SystemdExecutionPlan(
         approved=False,
@@ -52,7 +47,7 @@ def build_execution_plan(plan: RecoveryPlan) -> SystemdExecutionPlan:
     if deadline.tzinfo is None:
         return rejected
 
-    # Generate a normalized timestamp for a calendar timer.
+    
     from datetime import timezone
 
     deadline = deadline.astimezone(timezone.utc)

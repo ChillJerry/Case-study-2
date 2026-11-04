@@ -1,5 +1,4 @@
 
-"""Tests for SOAR security playbook integration."""
 
 import os
 import tempfile

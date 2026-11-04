@@ -1,5 +1,4 @@
 
-"""Tests for IP containment safety rules."""
 
 import unittest
 

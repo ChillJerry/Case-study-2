@@ -1,5 +1,4 @@
 
-"""Tests for persistent recovery timer configuration generation."""
 
 import unittest
 from datetime import datetime, timedelta, timezone

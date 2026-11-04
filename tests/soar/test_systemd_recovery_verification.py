@@ -1,5 +1,4 @@
 
-"""Tests for checking a scheduled systemd recovery deadline."""
 
 import subprocess
 import unittest

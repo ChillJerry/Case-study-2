@@ -1,5 +1,4 @@
 
-"""Generate a restricted persistent recovery timer configuration."""
 
 from datetime import datetime, timezone
 
@@ -14,7 +13,6 @@ def build_timer_configuration(
         *,
         now: datetime | None = None,
 ) -> str:
-    """Create a systemd calendar timer for the disposable demo service."""
 
     try:
         target = datetime.fromisoformat(deadline)
@@ -39,7 +37,7 @@ def build_timer_configuration(
             "Recovery must be scheduled 60–300 seconds ahead."
         )
 
-    # Round UP to whole seconds, never schedule before the deadline.
+    
     from datetime import timedelta
 
     if target.microsecond:

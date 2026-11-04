@@ -1,5 +1,4 @@
 
-"""Tests for the administrator-controlled containment helper."""
 
 import io
 import tempfile
@@ -74,7 +73,6 @@ class TestDemoContainmentHelper(unittest.TestCase):
             schedule_fails=False,
             verify_fails=False,
     ):
-        """Run containment against mocked systemd commands."""
 
         calls = []
 

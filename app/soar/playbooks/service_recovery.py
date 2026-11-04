@@ -1,8 +1,4 @@
 
-"""Plan safe, time-limited containment of the disposable test service.
-
-This module does NOT execute systemctl commands.
-"""
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
@@ -29,7 +25,6 @@ def plan_containment(
         pending_recovery: bool = False,
         now: datetime | None = None,
 ) -> RecoveryPlan:
-    """Validate a request and calculate its recovery deadline."""
 
     if service != DEMO_SERVICE:
         return RecoveryPlan(

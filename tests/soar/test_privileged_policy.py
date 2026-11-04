@@ -1,5 +1,4 @@
 
-"""Tests for the fixed privileged helper policy."""
 
 import unittest
 

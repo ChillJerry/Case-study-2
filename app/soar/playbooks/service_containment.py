@@ -1,5 +1,4 @@
 
-"""Safe dry-run service containment playbook."""
 
 import json
 import re
@@ -25,7 +24,6 @@ PROTECTED_SERVICES = {
 
 
 class ServiceContainmentExecutor:
-    """Validate and simulate containment of an approved test service."""
 
     def __init__(self, audit_path: str):
         self.audit_path = Path(audit_path)

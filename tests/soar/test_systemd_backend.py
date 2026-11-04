@@ -1,5 +1,4 @@
 
-"""Tests for restricted, read-only systemd inspection."""
 
 import subprocess
 import unittest

@@ -1,5 +1,4 @@
 
-"""Tests for the safe IP containment dry-run executor."""
 
 import tempfile
 import unittest

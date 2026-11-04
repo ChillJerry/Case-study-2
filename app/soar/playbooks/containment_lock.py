@@ -1,15 +1,9 @@
-
-"""Exclusive lock for service containment operations.
-
-Works on Windows and Linux. Does not execute system commands.
-"""
-
 from contextlib import contextmanager
 from pathlib import Path
 
 
 class ContainmentBusyError(Exception):
-    """Another containment operation owns the lock."""
+    pass
 
 
 class ContainmentLock:

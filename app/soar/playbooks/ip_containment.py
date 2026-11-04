@@ -1,19 +1,16 @@
-
-"""Validation for temporary IP containment playbooks."""
-
 from dataclasses import dataclass
 from ipaddress import ip_address, ip_network
 
 
-# Infrastructure addresses that must never be blocked.
+
 PROTECTED_NETWORKS = tuple(
     ip_network(network)
     for network in (
-        "10.20.0.0/16",  # AWS infrastructure
-        "10.30.0.0/24",  # On-premises infrastructure
-        "10.40.0.0/30",  # WireGuard tunnel
-        "127.0.0.0/8",   # Loopback
-        "169.254.0.0/16",  # Link-local / metadata
+        "10.20.0.0/16",  
+        "10.30.0.0/24",  
+        "10.40.0.0/30",  
+        "127.0.0.0/8",   
+        "169.254.0.0/16",  
     )
 )
 
@@ -30,11 +27,6 @@ def validate_containment(
         source_ip: str,
         duration_seconds: int = 300,
 ) -> ContainmentDecision:
-    """Validate a requested temporary IP block.
-
-    This function only makes a decision.
-    It never modifies firewall rules.
-    """
 
     try:
         address = ip_address(source_ip)

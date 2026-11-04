@@ -1,9 +1,3 @@
-
-"""Fixed policy for the future privileged SOAR helper.
-
-This module cannot execute commands.
-"""
-
 from dataclasses import dataclass
 
 from app.soar.playbooks.service_recovery import (
@@ -27,7 +21,6 @@ def validate_privileged_request(
         service: str,
         duration_seconds: int,
 ) -> PrivilegedRequest:
-    """Apply an independent, fixed containment policy."""
 
     reason = ""
 

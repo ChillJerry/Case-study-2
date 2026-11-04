@@ -95,7 +95,7 @@ jobs:
     needs: soar-tests
     runs-on: [self-hosted, Windows]
 
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
 
     timeout-minutes: 20
 

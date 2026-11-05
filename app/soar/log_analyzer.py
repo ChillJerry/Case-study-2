@@ -134,7 +134,7 @@ def detect_suspicious_activity(
         group.sort(key=lambda event: event["timestamp"])
 
         findings.append({
-            "event_type": "SuspiciousIPDetected",
+            "event_type": "PossiblePortScan",
             "classification": "Possible Port Scanning",
             "severity": "warning",
             "host": host,

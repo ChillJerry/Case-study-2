@@ -25,6 +25,10 @@ SUPPORTED_RULES = {
         "severity": "warning",
         "actions": ("record_incident", "notify_operator"),
     },
+    "PossiblePortScan": {
+        "severity": "warning",
+        "actions": ("record_incident", "notify_operator"),
+    },
     "SuspiciousIPDetected": {
         "severity": "critical",
         "actions": (

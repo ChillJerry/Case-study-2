@@ -45,7 +45,7 @@ scrape_configs:
     metrics_path: /metrics
     static_configs:
       - targets:
-          - "10.20.10.20:8080"
+          - "10.20.20.10:8000"
         labels:
           environment: "aws"
           service: "innovatech-soar"

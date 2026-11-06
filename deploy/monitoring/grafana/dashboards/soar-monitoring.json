@@ -72,7 +72,7 @@
                                    },
                        "targets":  [
                                        {
-                                           "expr":  "up{job=\"soar\"}",
+                                           "expr":  "up{job=\"soar\",instance=\"10.20.20.10:8000\"}",
                                            "refId":  "A",
                                            "legendFormat":  "SOAR",
                                            "instant":  true,
@@ -149,7 +149,7 @@
                                    },
                        "targets":  [
                                        {
-                                           "expr":  "100 * avg_over_time(up{job=\"soar\"}[24h])",
+                                           "expr":  "100 * avg_over_time(up{job=\"soar\",instance=\"10.20.20.10:8000\"}[24h])",
                                            "refId":  "A",
                                            "instant":  true,
                                            "range":  false
@@ -217,7 +217,7 @@
                                    },
                        "targets":  [
                                        {
-                                           "expr":  "scrape_duration_seconds{job=\"soar\"}",
+                                           "expr":  "scrape_duration_seconds{job=\"soar\",instance=\"10.20.20.10:8000\"}",
                                            "refId":  "A",
                                            "instant":  true,
                                            "range":  false
@@ -332,7 +332,7 @@
                                    },
                        "targets":  [
                                        {
-                                           "expr":  "up{job=\"soar\"}",
+                                           "expr":  "up{job=\"soar\",instance=\"10.20.20.10:8000\"}",
                                            "refId":  "A",
                                            "legendFormat":  "SOAR availability",
                                            "instant":  false,

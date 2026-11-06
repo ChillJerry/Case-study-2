@@ -468,7 +468,7 @@
       "options": {
         "colorMode": "none",
         "graphMode": "none",
-        "textMode": "value_and_name",
+        "textMode": "value",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
           "fields": "",
@@ -501,7 +501,7 @@
       "options": {
         "colorMode": "none",
         "graphMode": "none",
-        "textMode": "value_and_name",
+        "textMode": "value",
         "reduceOptions": {
           "calcs": ["lastNotNull"],
           "fields": "",

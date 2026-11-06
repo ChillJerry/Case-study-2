@@ -69,6 +69,7 @@ jobs:
             "app/soar/main.py",
             "app/soar/rules.py",
             "app/soar/actions.py",
+            "app/soar/postgres_store.py",
             "app/soar/dedup.py",
             "app/soar/metrics.py",
             "app/soar/requirements.txt"

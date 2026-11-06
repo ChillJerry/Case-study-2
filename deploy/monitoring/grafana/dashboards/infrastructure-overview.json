@@ -9,7 +9,7 @@
   ],
   "timezone": "browser",
   "schemaVersion": 41,
-  "version": 2,
+  "version": 3,
   "refresh": "30s",
   "time": {
     "from": "now-1h",
@@ -36,6 +36,13 @@
         "w": 12,
         "x": 0,
         "y": 0
+      },
+      "description": "How long Prometheus takes to scrape each target.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
       }
     },
     {
@@ -58,12 +65,13 @@
         "w": 12,
         "x": 12,
         "y": 0
-      }
+      },
+      "description": "1 is a successful scrape; 0 is an unsuccessful scrape. Not a count of hosts."
     },
     {
       "id": 3,
       "type": "stat",
-      "title": "Healthy Monitoring Targets",
+      "title": "Healthy Scrape Targets",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -71,7 +79,9 @@
       "targets": [
         {
           "expr": "sum(up)",
-          "refId": "A"
+          "refId": "A",
+          "legendFormat": "Healthy",
+          "instant": true
         }
       ],
       "gridPos": {
@@ -79,12 +89,13 @@
         "w": 8,
         "x": 0,
         "y": 9
-      }
+      },
+      "description": "Number of healthy Prometheus scrape endpoints, not physical servers."
     },
     {
       "id": 4,
       "type": "stat",
-      "title": "Unhealthy Monitoring Targets",
+      "title": "Unhealthy Scrape Targets",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -92,7 +103,9 @@
       "targets": [
         {
           "expr": "sum(up == bool 0)",
-          "refId": "A"
+          "refId": "A",
+          "legendFormat": "Unhealthy",
+          "instant": true
         }
       ],
       "gridPos": {
@@ -101,6 +114,30 @@
         "x": 8,
         "y": 9
       }
+    },
+    {
+      "id": 18,
+      "type": "stat",
+      "title": "Node Exporter Hosts",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "count(count by (instance) (node_uname_info))",
+          "refId": "A",
+          "legendFormat": "Exporting OS metrics",
+          "instant": true
+        }
+      ],
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 16,
+        "y": 9
+      },
+      "description": "Unique Node Exporter instances currently exposing OS metrics."
     },
     {
       "id": 5,
@@ -126,19 +163,25 @@
     {
       "id": 6,
       "type": "timeseries",
-      "title": "On-Premises CPU Usage (%)",
-      "description": "CPU utilization across the three on-premises servers.",
+      "title": "CPU Usage by Server (%)",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
       "targets": [
         {
-          "expr": "100 * (1 - avg by (host) (rate(node_cpu_seconds_total{environment=\"on-premises\",mode=\"idle\"}[5m])))",
+          "expr": "100 * (1 - avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])))",
           "refId": "A",
-          "legendFormat": "{{host}}"
+          "legendFormat": "{{instance}}"
         }
       ],
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      },
+      "description": "CPU utilization for every server reporting Node Exporter metrics.",
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
@@ -146,61 +189,29 @@
           "max": 100
         },
         "overrides": []
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 0,
-        "y": 24
       }
     },
     {
       "id": 7,
       "type": "timeseries",
-      "title": "On-Premises Memory Usage (%)",
-      "description": "Percentage of RAM used on each on-premises server.",
+      "title": "Memory Usage by Server (%)",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
       "targets": [
         {
-          "expr": "100 * (1 - node_memory_MemAvailable_bytes{environment=\"on-premises\"} / node_memory_MemTotal_bytes{environment=\"on-premises\"})",
+          "expr": "100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)",
           "refId": "A",
-          "legendFormat": "{{host}}"
+          "legendFormat": "{{instance}}"
         }
       ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "min": 0,
-          "max": 100
-        },
-        "overrides": []
-      },
       "gridPos": {
         "h": 9,
         "w": 12,
         "x": 12,
         "y": 24
-      }
-    },
-    {
-      "id": 8,
-      "type": "timeseries",
-      "title": "On-Premises Root Disk Usage (%)",
-      "description": "Root filesystem usage for each on-premises server.",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
       },
-      "targets": [
-        {
-          "expr": "100 * (1 - node_filesystem_avail_bytes{environment=\"on-premises\",mountpoint=\"/\",fstype!~\"tmpfs|overlay\"} / node_filesystem_size_bytes{environment=\"on-premises\",mountpoint=\"/\",fstype!~\"tmpfs|overlay\"})",
-          "refId": "A",
-          "legendFormat": "{{host}}"
-        }
-      ],
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
@@ -208,19 +219,42 @@
           "max": 100
         },
         "overrides": []
+      }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Root Disk Usage by Server (%)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
       },
+      "targets": [
+        {
+          "expr": "100 * (1 - node_filesystem_avail_bytes{mountpoint=\"/\",fstype!~\"tmpfs|overlay\"} / node_filesystem_size_bytes{mountpoint=\"/\",fstype!~\"tmpfs|overlay\"})",
+          "refId": "A",
+          "legendFormat": "{{instance}}"
+        }
+      ],
       "gridPos": {
         "h": 9,
         "w": 12,
         "x": 0,
         "y": 33
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        },
+        "overrides": []
       }
     },
     {
       "id": 9,
       "type": "stat",
       "title": "On-Premises Server Availability",
-      "description": "1 means the server is reachable by Prometheus; 0 means the scrape failed.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -233,6 +267,24 @@
           "instant": true
         }
       ],
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 33
+      },
+      "description": "1 means the scrape succeeds; 0 means it fails.",
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"]
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "textMode": "value_and_name"
+      },
       "fieldConfig": {
         "defaults": {
           "min": 0,
@@ -267,25 +319,250 @@
           }
         },
         "overrides": []
+      }
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Network Throughput by Server",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
       },
-      "options": {
-        "reduceOptions": {
-          "values": false,
-          "calcs": [
-            "lastNotNull"
-          ]
+      "targets": [
+        {
+          "expr": "sum by (instance) (rate(node_network_receive_bytes_total{device!~\"lo|veth.*|docker.*|br-.*\"}[5m]))",
+          "refId": "A",
+          "legendFormat": "Receive {{instance}}"
         },
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "textMode": "value_and_name"
+        {
+          "expr": "sum by (instance) (rate(node_network_transmit_bytes_total{device!~\"lo|veth.*|docker.*|br-.*\"}[5m]))",
+          "refId": "B",
+          "legendFormat": "Transmit {{instance}}"
+        }
+      ],
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 42
       },
+      "description": "Traffic on non-loopback and non-container interfaces.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Disk Read / Write Throughput",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "sum by (instance) (rate(node_disk_read_bytes_total{device!~\"loop.*|ram.*\"}[5m]))",
+          "refId": "A",
+          "legendFormat": "Read {{instance}}"
+        },
+        {
+          "expr": "sum by (instance) (rate(node_disk_written_bytes_total{device!~\"loop.*|ram.*\"}[5m]))",
+          "refId": "B",
+          "legendFormat": "Write {{instance}}"
+        }
+      ],
       "gridPos": {
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 33
+        "y": 42
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "System Load (1 minute)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "node_load1",
+          "refId": "A",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 51
+      },
+      "description": "Linux load average; compare it against CPU core count."
+    },
+    {
+      "id": 13,
+      "type": "timeseries",
+      "title": "CPU I/O Wait (%)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "100 * avg by(instance)(rate(node_cpu_seconds_total{mode=\"iowait\"}[5m]))",
+          "refId": "A",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 51
+      },
+      "description": "CPU time spent waiting for disk operations.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 14,
+      "type": "stat",
+      "title": "Server Uptime",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "time() - node_boot_time_seconds",
+          "refId": "A",
+          "legendFormat": "{{instance}}",
+          "instant": true
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 60
+      },
+      "description": "Time since the host last booted.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 15,
+      "type": "stat",
+      "title": "Root Disk Free Space",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "node_filesystem_avail_bytes{mountpoint=\"/\",fstype!~\"tmpfs|overlay\"}",
+          "refId": "A",
+          "legendFormat": "{{instance}}",
+          "instant": true
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 60
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 16,
+      "type": "timeseries",
+      "title": "Network Errors per Second",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "sum by(instance)(rate(node_network_receive_errs_total{device!~\"lo|veth.*\"}[5m]))",
+          "refId": "A",
+          "legendFormat": "Receive errors {{instance}}"
+        },
+        {
+          "expr": "sum by(instance)(rate(node_network_transmit_errs_total{device!~\"lo|veth.*\"}[5m]))",
+          "refId": "B",
+          "legendFormat": "Transmit errors {{instance}}"
+        }
+      ],
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 68
+      },
+      "description": "Network interface error rates.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 17,
+      "type": "timeseries",
+      "title": "Disk I/O Busy Time (%)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "100 * sum by(instance)(rate(node_disk_io_time_seconds_total{device!~\"loop.*|ram.*\"}[5m]))",
+          "refId": "A",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 68
+      },
+      "description": "Sum of disk busy times; can exceed 100% with multiple disks.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0
+        },
+        "overrides": []
       }
     }
   ]

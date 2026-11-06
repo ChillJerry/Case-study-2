@@ -465,6 +465,16 @@
         "y": 60
       },
       "description": "Time since the host last booted.",
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "textMode": "value_and_name",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        }
+      },
       "fieldConfig": {
         "defaults": {
           "unit": "s"
@@ -488,6 +498,16 @@
           "instant": true
         }
       ],
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "textMode": "value_and_name",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        }
+      },
       "gridPos": {
         "h": 8,
         "w": 12,

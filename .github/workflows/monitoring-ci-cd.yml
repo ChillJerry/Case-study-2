@@ -7,6 +7,7 @@ on:
       - main
     paths:
       - "deploy/monitoring/grafana/dashboards/**"
+      - "deploy/monitoring/prometheus/prometheus.yml"
       - "deploy/monitoring/deploy_dashboards.sh"
       - ".github/workflows/monitoring-ci-cd.yml"
 
@@ -15,6 +16,7 @@ on:
       - main
     paths:
       - "deploy/monitoring/grafana/dashboards/**"
+      - "deploy/monitoring/prometheus/prometheus.yml"
       - "deploy/monitoring/deploy_dashboards.sh"
       - ".github/workflows/monitoring-ci-cd.yml"
 
@@ -43,12 +45,11 @@ jobs:
           from pathlib import Path
 
           root = Path("deploy/monitoring/grafana/dashboards")
-          names = [
-              "infrastructure-overview.json",
-              "soar-monitoring.json",
-              "security-log-monitoring.json",
-          ]
-
+          names = sorted(path.name for path in root.glob("*.json"))
+          
+          if not names:
+              raise ValueError("No dashboard JSON files found")
+          
           uids = set()
 
           for name in names:
@@ -125,12 +126,21 @@ jobs:
 
           Write-Host "Linux deployment script prepared successfully"
 
-          $files = @(
-            "deploy/monitoring/grafana/dashboards/infrastructure-overview.json",
-            "deploy/monitoring/grafana/dashboards/soar-monitoring.json",
-            "deploy/monitoring/grafana/dashboards/security-log-monitoring.json"
+          $files =  @(
+            Get-ChildItem "deploy/monitoring/grafana/dashboards" -Filter "*.json" -File |
+              Sort-Object Name |
+              ForEach-Object {
+                "deploy/monitoring/grafana/dashboards/$($_.Name)"
+              }
           )
+          $files += "deploy/monitoring/prometheus/prometheus.yml"
+  
+          if (-not (Test-Path "deploy/monitoring/prometheus/prometheus.yml")) {
+            throw "Prometheus configuration missing"
+          }
 
+          Write-Host "Files included in deployment:"
+          $files | ForEach-Object { Write-Host $_ }
           git archive --format=zip "--output=$archive" HEAD $files
 
           if ($LASTEXITCODE -ne 0) {

@@ -8,7 +8,7 @@
              ],
     "timezone":  "browser",
     "schemaVersion":  41,
-    "version":  6,
+    "version":  7,
     "refresh":  "30s",
     "time":  {
                  "from":  "now-1h",
@@ -216,7 +216,7 @@
                        "targets":  [
                                        {
                                            "refId":  "A",
-                                           "expr":  "label_replace((label_replace((label_replace((100 * (1 - node_filesystem_avail_bytes{mountpoint=\"/\",fstype!~\"tmpfs|overlay\"} / node_filesystem_size_bytes{mountpoint=\"/\",fstype!~\"tmpfs|overlay\"})), \"host\", \"On-prem Gateway\", \"instance\", \"(10\\.30\\.0\\.1|10\\.40\\.0\\.2):9100\")), \"host\", \"On-prem Linux\", \"instance\", \"10\\.30\\.0\\.10:9100\")), \"host\", \"On-prem Security\", \"instance\", \"10\\.30\\.0\\.20:9100\")",
+                                           "expr":  "label_replace((label_replace((label_replace((100 * (1 - node_filesystem_avail_bytes{mountpoint=\"/\",fstype!~\"tmpfs|overlay\"} / node_filesystem_size_bytes{mountpoint=\"/\",fstype!~\"tmpfs|overlay\"})), \"host\", \"On-prem Gateway\", \"instance\", \"(10[.]30[.]0[.]1|10[.]40[.]0[.]2):9100\")), \"host\", \"On-prem Linux\", \"instance\", \"10[.]30[.]0[.]10:9100\")), \"host\", \"On-prem Security\", \"instance\", \"10[.]30[.]0[.]20:9100\")",
                                            "legendFormat":  "{{host}}"
                                        }
                                    ],
@@ -450,7 +450,7 @@
                                        {
                                            "refId":  "A",
                                            "legendFormat":  "{{instance}}",
-                                           "expr":  "label_replace((label_replace((label_replace((time() - node_boot_time_seconds{environment=\"on-premises\"}), \"host\", \"On-prem Gateway\", \"instance\", \"(10\\.30\\.0\\.1|10\\.40\\.0\\.2):9100\")), \"host\", \"On-prem Linux\", \"instance\", \"10\\.30\\.0\\.10:9100\")), \"host\", \"On-prem Security\", \"instance\", \"10\\.30\\.0\\.20:9100\")",
+                                           "expr":  "label_replace((label_replace((label_replace((time() - node_boot_time_seconds{environment=\"on-premises\"}), \"host\", \"On-prem Gateway\", \"instance\", \"(10[.]30[.]0[.]1|10[.]40[.]0[.]2):9100\")), \"host\", \"On-prem Linux\", \"instance\", \"10[.]30[.]0[.]10:9100\")), \"host\", \"On-prem Security\", \"instance\", \"10[.]30[.]0[.]20:9100\")",
                                            "instant":  true,
                                            "range":  false
                                        }
@@ -494,7 +494,7 @@
                                        {
                                            "refId":  "A",
                                            "legendFormat":  "{{instance}}",
-                                           "expr":  "label_replace((label_replace((label_replace((100 * node_filesystem_avail_bytes{environment=\"on-premises\",mountpoint=\"/\",fstype!~\"tmpfs|overlay\"} / node_filesystem_size_bytes{environment=\"on-premises\",mountpoint=\"/\",fstype!~\"tmpfs|overlay\"}), \"host\", \"On-prem Gateway\", \"instance\", \"(10\\.30\\.0\\.1|10\\.40\\.0\\.2):9100\")), \"host\", \"On-prem Linux\", \"instance\", \"10\\.30\\.0\\.10:9100\")), \"host\", \"On-prem Security\", \"instance\", \"10\\.30\\.0\\.20:9100\")",
+                                           "expr":  "label_replace((label_replace((label_replace((100 * node_filesystem_avail_bytes{environment=\"on-premises\",mountpoint=\"/\",fstype!~\"tmpfs|overlay\"} / node_filesystem_size_bytes{environment=\"on-premises\",mountpoint=\"/\",fstype!~\"tmpfs|overlay\"}), \"host\", \"On-prem Gateway\", \"instance\", \"(10[.]30[.]0[.]1|10[.]40[.]0[.]2):9100\")), \"host\", \"On-prem Linux\", \"instance\", \"10[.]30[.]0[.]10:9100\")), \"host\", \"On-prem Security\", \"instance\", \"10[.]30[.]0[.]20:9100\")",
                                            "instant":  true,
                                            "range":  false
                                        }

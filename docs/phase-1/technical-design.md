@@ -1,1229 +1,1181 @@
-
 # Technical Design
-## Innovatech Solutions — Hybrid Cloud Infrastructure
-
-**Project:** Hybrid Cloud Infrastructure and Security Automation
-**Client:** Innovatech Solutions
-**Document Version:** 1.0
-**Project Phase:** Phase 1 — Analysis and Design
-
----
 
 ## 1. Introduction
 
-### 1.1 Purpose
+For this project, I built a hybrid infrastructure that connects an AWS environment with several Ubuntu virtual machines running locally in VirtualBox.
 
-This document describes the technical architecture of the hybrid cloud infrastructure implemented for Innovatech Solutions.
+The main idea is to have a central monitoring platform in AWS that collects information from both environments. I also developed a Python SOAR application that can analyze security events and execute predefined response actions.
 
-The design covers cloud hosting, network segmentation, hybrid connectivity, centralized monitoring, security automation, persistent storage and infrastructure management.
+The infrastructure is managed using Terraform, Ansible, Docker Compose and GitHub Actions.
 
-The architecture is designed to meet the functional and non-functional requirements defined in the Requirements Analysis.
+I wanted to keep the environment relatively simple and inexpensive while still implementing the main networking, monitoring, security and automation requirements.
 
-### 1.2 Design Objectives
+## 2. Infrastructure Overview
 
-The infrastructure is designed to:
-
-- Provide secure communication between AWS and on-premises systems.
-- Separate monitoring, security automation and monitored workloads.
-- Collect and visualize infrastructure metrics and security logs.
-- Process security alerts through an automated SOAR application.
-- Store incident records and response results persistently.
-- Automate infrastructure provisioning and system configuration.
-- Support centralized updates across multiple Linux machines.
-- Allow recovery from isolated infrastructure and application failures.
-- Support testing and deployment through version-controlled automation.
-
----
-
-## 2. Infrastructure Architecture
-
-### 2.1 Architecture Overview
-
-The infrastructure consists of two environments:
+The infrastructure is divided into two environments:
 
 1. AWS cloud infrastructure.
-2. Simulated on-premises infrastructure.
+2. On-premises infrastructure simulated through VirtualBox.
 
-AWS provides the hosting environment for the centralized monitoring and SOAR services.
+AWS hosts the monitoring platform, SOAR application and VPN gateway.
 
-The on-premises environment contains Linux systems responsible for generating operational metrics and security events.
+The on-premises environment contains three Ubuntu virtual machines used for networking, monitoring, security event generation and centralized updates.
 
-The environments communicate through an encrypted WireGuard VPN.
+Both environments communicate through an encrypted WireGuard VPN.
 
-Application services are deployed through Docker Compose, while Terraform and Ansible manage infrastructure provisioning and system configuration.
+### 2.1 AWS Infrastructure
 
-### 2.2 AWS Infrastructure
+I deployed three EC2 instances in the AWS Frankfurt region (`eu-central-1`).
 
-The AWS infrastructure will be deployed in the eu-central-1 (Frankfurt) region.
+| Server | Instance Type | Private IP | Storage | Purpose |
+|---|---|---|---|---|
+| Monitoring | t3.medium | 10.20.10.10 | 40 GiB gp3 | Monitoring and logging |
+| SOAR | t3.small | 10.20.20.10 | 20 GiB gp3 | Security event processing |
+| Gateway | t3.micro | 10.20.30.10 | 12 GiB gp3 | VPN, routing and NAT |
 
-A dedicated VPC will contain separate network segments for monitoring and SOAR.
+All three instances use Ubuntu Server 24.04 LTS.
 
-Two EC2 instances will provide the primary application hosting environment.
+The monitoring and SOAR instances are deployed in private subnets without directly assigned public IPv4 addresses.
 
-#### Monitoring Server
+The gateway has a public IPv4 address because it needs to accept WireGuard connections from the on-premises environment.
 
-**Resource Name:** innovatech-monitoring
+The instances were provisioned using Terraform.
 
-**Operating System:** Ubuntu Server LTS
+### 2.2 On-Premises Infrastructure
 
-**Application Platform:** Docker Compose
+The on-premises environment runs in VirtualBox on my Windows computer.
 
-**Services:**
+It contains three Ubuntu virtual machines.
 
-- Grafana
-- Prometheus
-- Grafana Loki
-- Prometheus Alertmanager
-- Grafana Alloy, where required
-
-The monitoring server will collect and store telemetry received from cloud and on-premises systems.
-
-Grafana will provide dashboards for infrastructure metrics, security events and SOAR activity.
-
-Prometheus will store time-series metrics, while Loki will store collected logs.
-
-Alertmanager will route Prometheus alerts to configured receivers.
-
-#### SOAR Server
-
-**Resource Name:** innovatech-soar
-
-**Operating System:** Ubuntu Server LTS
-
-**Application Platform:** Docker Compose
-
-**Services:**
-
-- Python/FastAPI SOAR application
-- Event collector and rule engine
-- Automated response modules
-- PostgreSQL database
-
-The SOAR server will receive security events from the monitoring environment and execute predefined automated responses.
-
-PostgreSQL will store incident records, rule matches and execution results.
-
-The SOAR application will expose health and metrics endpoints for Prometheus.
-
-The database will not be accessible from the public internet.
-
-### 2.3 On-Premises Infrastructure
-
-The simulated on-premises environment will contain two Linux virtual machines.
-
-#### Linux Server
-
-**Resource Name:** innovatech-linux
-
-Responsibilities:
-
-- Generate Linux authentication events.
-- Provide system logs.
-- Expose infrastructure metrics.
-- Run Grafana Alloy.
-- Generate simulated suspicious activity.
-
-#### Security Server
-
-**Resource Name:** innovatech-security
-
-Responsibilities:
-
-- Generate firewall and network security logs.
-- Simulate suspicious network connections.
-- Provide events for security detection rules.
-- Run Grafana Alloy.
-- Support controlled automated firewall responses.
-
-These systems will operate independently from the cloud-hosted SOAR platform.
-
-### 2.4 Infrastructure Management
-
-Terraform will define and provision AWS resources.
-
-Ansible will configure the Linux servers, install required software and manage operating system updates.
-
-GitHub Actions will execute automated testing and deployment workflows through a self-hosted runner.
-
-The project will maintain separate configurations for infrastructure provisioning, system management and application deployment.
-
----
-
-## 3. Network Architecture
-
-### 3.1 AWS VPC
-
-A dedicated VPC will be created for the infrastructure.
-
-**VPC Name:** innovatech-cs2-vpc
-
-**VPC CIDR:** 10.20.0.0/16
-
-The VPC will contain two application subnets and a dedicated gateway subnet.
-
-### 3.2 Subnet Design
-
-| Subnet | CIDR | Purpose |
+| VM | IP Address | Purpose |
 |---|---|---|
-| Monitoring Subnet | 10.20.10.0/24 | Monitoring EC2 instance |
-| SOAR Subnet | 10.20.20.0/24 | SOAR EC2 instance |
-| Gateway Subnet | 10.20.30.0/24 | VPN and controlled network access |
+| cs2-onprem-gateway | 10.30.0.1 | Local gateway, WireGuard, firewall and DNS |
+| cs2-onprem-linux | 10.30.0.10 | Linux monitoring target and Ansible controller |
+| cs2-onprem-security | 10.30.0.20 | Security monitoring target |
 
-The monitoring and SOAR application instances will use private IP addresses.
+The VMs communicate through an internal VirtualBox network.
 
-A VPN gateway will provide controlled connectivity to the on-premises environment.
+The gateway has an additional network adapter for outbound connectivity and uses the internal interface to communicate with the other two machines.
 
-Administrative access will use a documented restricted management path.
+The Linux and Security VMs are separate from the AWS-hosted SOAR application, which satisfies the requirement to keep the monitored systems on a different platform.
 
-### 3.3 On-Premises Network
+### 2.3 Architecture Diagram
 
-The simulated on-premises environment will use a separate private address range.
+The network architecture diagram is stored under:
 
-**Network CIDR:** 10.30.0.0/24
+`docs/diagrams/network-architecture.png`
 
-Initial addressing:
+It shows the AWS VPC, on-premises network, VPN gateways and the connection between the two environments.
 
-| Resource | IP Address |
-|---|---|
-| Local Gateway | 10.30.0.1 |
-| Linux Server | 10.30.0.10 |
-| Security Server | 10.30.0.20 |
+## 3. AWS Network Design
 
-These addresses will be assigned through the local virtual network configuration.
+### 3.1 VPC and Subnets
 
-The local network will not overlap with the AWS VPC.
+I created a dedicated AWS VPC using:
 
+`10.20.0.0/16`
 
-### 3.4 Hybrid Connectivity
+The infrastructure is divided into three subnets.
 
-WireGuard will establish an encrypted VPN connection between the AWS infrastructure and the simulated on-premises network.
+| Subnet | CIDR | Resources |
+|---|---|---|
+| Monitoring | 10.20.10.0/24 | Monitoring EC2 |
+| SOAR | 10.20.20.0/24 | SOAR EC2 |
+| Gateway | 10.20.30.0/24 | VPN Gateway EC2 |
 
-The gateway will provide controlled connectivity between:
+The separate subnets make it easier to control network access and understand which resources belong to each part of the infrastructure.
 
-- AWS VPC: 10.20.0.0/16
-- On-premises network: 10.30.0.0/24
+### 3.2 Routing
 
-The VPN will use authenticated peers and restricted AllowedIPs settings to limit permitted network destinations.
+The gateway subnet has a route to the AWS Internet Gateway.
 
-#### Routing and Network Address Translation
+The private Monitoring and SOAR subnets use the gateway EC2 instance for outbound internet access.
 
-The monitoring and SOAR subnets will share a private route table.
+The AWS gateway performs network address translation using Linux IP forwarding and nftables.
 
-Outbound IPv4 traffic will be routed through the gateway EC2 instance, which will provide Network Address Translation (NAT) for private AWS resources.
+A route for the on-premises network `10.30.0.0/24` directs traffic through the gateway.
 
-Traffic destined for the on-premises network (10.30.0.0/24) will be routed through the gateway and forwarded over the WireGuard tunnel without internet NAT.
+This allows AWS systems to communicate with the on-premises environment through WireGuard.
 
-Source/destination checking will be disabled on the gateway to allow packet forwarding.
+### 3.3 EC2 Gateway Instead of AWS NAT Gateway
 
-AWS route tables, Security Groups and Linux firewall rules will control communication between the AWS infrastructure, on-premises systems and external networks.
+I decided to use an EC2 instance for NAT instead of an AWS-managed NAT Gateway.
 
-#### Gateway Configuration
+The main reason was cost.
 
-The gateway will use Linux IP forwarding and nftables to manage network traffic.
+A managed NAT Gateway would introduce additional hourly charges, while the EC2 gateway can also handle WireGuard connectivity.
 
-Initial gateway configuration will be automated using an EC2 user-data script. The script will:
+The gateway uses:
 
-1. Install and enable nftables.
-2. Enable IPv4 packet forwarding.
-3. Configure outbound NAT for the private AWS subnets.
-4. Apply initial firewall forwarding rules.
-5. Validate and activate the firewall configuration.
+- Linux IP forwarding.
+- nftables.
+- Source NAT masquerading for internet-bound traffic.
+- Routing for the on-premises network.
+- WireGuard VPN.
 
-WireGuard tunnel configuration, VPN-specific forwarding rules and DNS forwarding will be implemented separately.
+Source/destination checking is disabled on the gateway EC2 instance because it forwards traffic for other machines.
 
-Subsequent configuration changes and maintenance will be managed through Ansible.
+The disadvantage is that this gateway becomes a single point of failure.
 
-#### Security and Access Control
+If the gateway is stopped, the private AWS instances can lose outbound connectivity and the hybrid VPN becomes unavailable.
 
-Only the VPN gateway will expose the WireGuard endpoint to the public internet.
+### 3.4 AWS Security Groups
 
-The monitoring and SOAR servers will remain in private subnets without public IP addresses.
+I created separate security groups for the Monitoring, SOAR and Gateway instances.
 
-VPN access will be restricted through peer authentication, routing configuration and firewall policies.
+The main access rules are:
 
-The VPN will not provide unrestricted access to AWS resources. Authorized and unauthorized connectivity will be verified during integration testing.
-
-#### WireGuard Tunnel Design
-
-The hybrid VPN will use a dedicated tunnel subnet, 10.40.0.0/30.
-
-The AWS gateway will use tunnel address 10.40.0.1, while the on-premises gateway will use 10.40.0.2.
-
-The AWS WireGuard peer will advertise the on-premises network (10.30.0.0/24), and the local peer will route AWS VPC traffic (10.20.0.0/16) through the encrypted tunnel.
-
-WireGuard peer authentication will use separate asymmetric key pairs. Private keys will not be stored in Git or Terraform state.
-
-The on-premises gateway will initiate the connection to the AWS gateway's Elastic IP on UDP port 51820.
-
-Both gateways will require IPv4 forwarding and firewall policies permitting authorized VPN traffic. The on-premises virtual machines will route AWS-bound traffic through the local gateway.
-
-Traffic between the networks will preserve original private IP addresses to support firewall filtering and security event attribution.
-
-Ansible templates will define the WireGuard interface configuration. Actual keys, gateway network configuration and connectivity testing will be completed during implementation.
-
-### 3.5 Firewall and Security Groups
-
-AWS Security Groups will restrict traffic between the different infrastructure components.
-
-Planned communication:
-
-| Source | Destination | Service | Port |
+| Source | Destination | Port | Purpose |
 |---|---|---|---|
-| On-premises systems | Loki | Log ingestion | TCP 3100 |
-| On-premises systems | Monitoring server | Metrics collection / forwarding | To be defined |
-| Monitoring server | SOAR API | Security event forwarding | TCP 8000 |
-| Monitoring server | SOAR metrics | Prometheus scraping | TCP 8000 |
-| SOAR application | PostgreSQL | Database access | TCP 5432 |
-| Authorized administrator | Grafana | Web dashboard | TCP 3000 |
-| VPN peers | WireGuard gateway | Encrypted tunnel | UDP 51820 |
+| On-premises network | Monitoring | TCP 3000 | Grafana |
+| Authorized on-premises systems | Monitoring | TCP 3100 | Loki log ingestion |
+| SOAR security group | Monitoring | TCP 3100 | SOAR log access |
+| Monitoring security group | SOAR | TCP 8000 | SOAR API and metrics |
+| Internet | AWS Gateway | UDP 51820 | WireGuard |
 
-These are application service ports, not public ingress permissions.
+The SOAR API is not exposed directly to the on-premises environment.
 
-Prometheus, Loki, PostgreSQL and the SOAR API will remain on private network interfaces or internal container networks.
+Only the Monitoring security group is allowed to connect to SOAR on port 8000.
 
-PostgreSQL access will be restricted to the SOAR application. If both services share a Docker network, database traffic will remain inside that network rather than crossing the AWS subnet.
+The gateway and monitoring rules are designed around the specific communication paths needed by the project instead of allowing unrestricted access.
 
-The exact firewall implementation will be validated during deployment.
+Administrative access to the AWS instances is provided through Systems Manager Session Manager.
 
-### 3.6 Private DNS
+### 3.5 Network Testing
 
-Internal service names will be used instead of hardcoded IP addresses.
+I verified the AWS infrastructure by checking:
 
-The internal DNS namespace will be:
+- EC2 instance states and health checks.
+- AWS security group rules.
+- Private IP addressing.
+- WireGuard connectivity.
+- Private HTTP access to Grafana.
 
-**innovatech.internal**
+The on-premises gateway successfully accessed Grafana using its private AWS address.
 
-Planned records:
+**Evidence:**
 
-| Service | DNS Name |
+- `docs/evidence/network/01-aws-ec2-instances.png`
+- `docs/evidence/network/02-aws-security-groups.png`
+- `docs/evidence/network/04-private-connectivity.png`
+
+## 4. WireGuard VPN
+
+### 4.1 VPN Design
+
+WireGuard provides the encrypted connection between AWS and VirtualBox.
+
+I use a dedicated tunnel network:
+
+`10.40.0.0/30`
+
+The tunnel addresses are:
+
+| Gateway | Tunnel IP |
 |---|---|
-| Monitoring | monitoring.innovatech.internal |
-| SOAR | soar.innovatech.internal |
-| Gateway | gateway.innovatech.internal |
+| AWS Gateway | 10.40.0.1 |
+| On-premises Gateway | 10.40.0.2 |
 
-AWS systems will resolve these records through Route 53 Private DNS.
+The on-premises gateway connects to the AWS gateway using its public IPv4 address on UDP port 51820.
 
-On-premises clients will use a DNS forwarding service over the VPN.
+The VPN allows traffic between:
 
-The forwarding service must be able to resolve the internal namespace through an authorized AWS-side resolver.
+- AWS: `10.20.0.0/16`
+- On-premises: `10.30.0.0/24`
 
-The final DNS forwarding method will be selected during implementation after evaluating resource requirements and operating costs.
+### 4.2 Routing Through the VPN
 
----
+The on-premises gateway routes AWS-bound traffic through its `wg0` interface.
 
-## 4. Network Security
+The AWS gateway routes traffic intended for the on-premises network back through WireGuard.
 
-### 4.1 Network Isolation
+Both gateways have IPv4 forwarding enabled.
 
-The infrastructure will maintain logical separation between the monitoring environment, SOAR environment and on-premises systems.
+The firewall rules allow the required communication while blocking unnecessary traffic.
 
-The following restrictions will apply:
+### 4.3 VPN Security
 
-- PostgreSQL will not have public network access.
-- Monitoring backends will accept connections only from authorized sources.
-- SOAR API access will be restricted to trusted monitoring and management components.
-- On-premises systems will not receive unrestricted access to AWS resources.
-- Only the VPN gateway will accept the WireGuard connection.
-- Administrative connectivity will be restricted and authenticated.
+WireGuard uses public and private keys to authenticate the two VPN peers.
 
-### 4.2 Credentials and Secrets
+Private keys are stored on the gateways rather than in the GitHub repository.
 
-The infrastructure will not store sensitive credentials in the Git repository.
+The VPN provides encrypted communication between the environments, but access is still controlled by security groups and firewalls.
 
-Sensitive configuration includes:
+Connecting to the VPN does not automatically mean that every internal service is accessible.
 
-- Database passwords.
-- VPN private keys.
-- API authentication credentials.
-- AWS access credentials.
-- CI/CD deployment credentials.
+### 4.4 VPN Testing
 
-Terraform state and automation credentials will be protected from unauthorized access.
+I verified the tunnel using:
 
-Application services will retrieve credentials through controlled environment configuration or an appropriate secret-management mechanism.
+```bash
+sudo wg show
+```
 
-### 4.3 Security Validation
+The output showed an active peer, a recent handshake and transferred data.
 
-The network security configuration will be tested through:
+I also tested application connectivity using:
 
-- Authorized connection tests.
-- Unauthorized connection attempts.
-- Private DNS resolution tests.
-- VPN connectivity tests.
-- Database exposure verification.
-- Security Group and firewall rule inspection.
+```bash
+curl -I http://10.20.10.10:3000/login
+```
 
-The results will be recorded in the final testing documentation.
+The request returned HTTP 200 from Grafana.
 
-### 4.4 Security Groups and Instance Management
+This confirmed that the VPN was working for an actual application connection rather than only showing an active tunnel.
 
-Three AWS Security Groups will separate the monitoring, SOAR and VPN gateway environments.
+**Evidence:**
 
-The monitoring Security Group will allow Grafana access and Loki log ingestion from authorized systems connected through the VPN.
+- `docs/evidence/network/03-wireguard-vpn.png`
+- `docs/evidence/network/04-private-connectivity.png`
 
-The SOAR Security Group will allow API requests and metrics collection from the monitoring server over the private AWS network.
+## 5. On-Premises Firewall
 
-The VPN gateway Security Group will allow WireGuard connections on UDP port 51820. Forwarded traffic will be controlled through VPC routing, Security Groups and host firewall rules.
+### 5.1 Firewall Design
 
-The EC2 instances will use an IAM instance profile with the AmazonSSMManagedInstanceCore policy.
+I use nftables on the on-premises gateway to control incoming and forwarded traffic.
 
-Administrative access will be provided through AWS Systems Manager Session Manager, avoiding the need to expose SSH to the public internet.
+The input chain uses a default-drop policy.
 
-Private instances will access the required Systems Manager endpoints through configured outbound networking.
+This means incoming traffic is rejected unless a rule explicitly allows it.
 
-The final firewall configuration will be verified through authorized and unauthorized connectivity tests.
+The configuration includes rules for:
 
-## 5. Monitoring Architecture
+- Loopback traffic.
+- Established and related connections.
+- ICMP diagnostics.
+- WireGuard communication.
+- SSH management.
+- Monitoring traffic.
+- Internal DNS requests.
+- Allowed forwarding between AWS and on-premises networks.
 
-### 5.1 Overview
+### 5.2 Firewall Logging
 
-The monitoring infrastructure will provide centralized visibility into the AWS environment, on-premises Linux systems and SOAR application.
+I added a logging rule for traffic that does not match the allowed connections.
 
-The monitoring stack consists of:
+The logs use the prefix:
 
-- Prometheus for collecting and storing metrics.
-- Grafana for dashboards and visualization.
-- Grafana Loki for centralized log storage.
-- Grafana Alloy for collecting and forwarding telemetry.
-- Prometheus Alertmanager for routing metric-based alerts.
-- Grafana Alerting for detecting security events in Loki logs.
+`INNOVATECH_FW_DROP`
 
-The services will run in Docker containers on the monitoring EC2 instance.
+The rule also includes rate limiting to avoid generating an excessive number of log messages.
 
-System telemetry will be transmitted through private network connections.
+The resulting events are written to the Linux kernel log and collected by Grafana Alloy.
 
-### 5.2 Metrics Collection
+This is important because the firewall acts as both a security control and a source of security events for SOAR.
 
-Prometheus will collect infrastructure and application metrics using HTTP endpoints.
+### 5.3 Firewall Testing
 
-Linux systems will expose system metrics through Grafana Alloy's Prometheus-compatible integrations.
+I generated TCP connection attempts from `cs2-onprem-linux` toward unauthorized ports on the gateway.
 
-The SOAR application will expose a dedicated `/metrics` endpoint.
+The test used four destination ports:
 
-The following information will be collected:
+- 45678
+- 45679
+- 45680
+- 45681
 
-| Source | Metrics |
+The gateway blocked the attempts and generated 12 relevant firewall log events.
+
+These events were later used for the SOAR port-scanning detection test.
+
+**Evidence:**
+
+- `docs/evidence/security/16-firewall-blocked-traffic.png`
+- `docs/evidence/monitoring/09-loki-firewall-query.png`
+
+## 6. Internal DNS
+
+### 6.1 DNS Design
+
+I configured dnsmasq on the on-premises gateway to provide internal DNS resolution.
+
+The service listens on:
+
+`10.30.0.1:53`
+
+The internal domain is:
+
+`innovatech.internal`
+
+The configured records are:
+
+| Hostname | Private IP |
 |---|---|
-| Monitoring server | CPU, memory, disk usage, network activity |
-| SOAR server | CPU, memory, disk usage, network activity |
-| On-premises Linux server | CPU, memory, disk usage, network activity |
-| Security server | CPU, memory, disk usage, network activity |
-| SOAR application | Events processed, successful actions, failed actions, processing duration |
-| Prometheus | Scrape status and collection performance |
-| Loki | Log ingestion and processing metrics |
-| PostgreSQL | Database availability and connection health |
+| monitoring.innovatech.internal | 10.20.10.10 |
+| soar.innovatech.internal | 10.20.20.10 |
+| gateway.innovatech.internal | 10.30.0.1 |
 
-Prometheus will collect metrics at a default interval of 15 seconds.
+I chose dnsmasq because the infrastructure only needs a few private DNS records.
 
-The collection interval can be adjusted for specific targets if required.
+It is simpler than introducing Route 53 resolver infrastructure or running a full BIND9 DNS server.
 
-### 5.3 Log Collection
+### 6.2 DNS Configuration
 
-Grafana Alloy will collect logs from the monitored Linux systems.
+The main configuration is stored in:
 
-The monitoring system will integrate at least two distinct log sources.
+`/etc/dnsmasq.d/innovatech-internal.conf`
 
-**Source 1 — Linux Authentication Logs**
+The configuration uses:
 
-Authentication events will be collected from the Linux system journal or authentication log files.
+```ini
+port=53
+listen-address=10.30.0.1
+bind-interfaces
+no-dhcp-interface=enp0s8
 
-Events include:
+local=/innovatech.internal/
 
-- Failed SSH authentication.
-- Successful SSH authentication.
-- Authentication failures.
-- Suspicious login activity.
+address=/monitoring.innovatech.internal/10.20.10.10
+address=/soar.innovatech.internal/10.20.20.10
+address=/gateway.innovatech.internal/10.30.0.1
+```
 
-**Source 2 — Firewall and Network Security Logs**
+The DNS service listens only on the gateway's private network address.
 
-Firewall events will be collected from the security server.
+### 6.3 DNS Firewall Rules
 
-Events include:
+Initially, DNS queries from the Linux client timed out because the gateway's default-drop firewall blocked port 53.
 
-- Blocked connections.
-- Repeated connection attempts.
-- Suspicious source addresses.
-- Port scanning activity.
+I fixed this by adding rules to `/etc/nftables.conf` that permit TCP and UDP DNS requests from `10.30.0.0/24`.
 
-Grafana Alloy will forward logs to Loki through the private network.
+I checked the configuration using:
 
-Loki will organize logs using labels identifying the source, host, service and environment.
+```bash
+sudo nft -c -f /etc/nftables.conf
+```
 
-### 5.4 Log Labels
+After validation, I reloaded nftables and confirmed that the rules were present.
 
-The logging system will use consistent labels.
+The original firewall logging rule remained active.
 
-| Label | Purpose |
-|---|---|
-| host | Identifies the machine generating the log |
-| job | Identifies the log collection job |
-| service | Identifies the service generating the event |
-| environment | Identifies the infrastructure environment |
-| log_source | Distinguishes authentication, firewall and application logs |
+### 6.4 DNS Testing
 
-Labels will use controlled values to avoid excessive cardinality.
-
-Unique incident identifiers, timestamps and source IP addresses will remain in log content rather than being used as high-cardinality labels.
-
-### 5.5 Grafana Dashboards
-
-Three main dashboards will be created.
-
-#### Infrastructure Overview
-
-The dashboard will display:
-
-- CPU utilization.
-- Memory utilization.
-- Disk usage.
-- Network traffic.
-- Machine availability.
-- Monitoring target status.
-
-#### Security Monitoring
-
-The dashboard will display:
-
-- Failed authentication attempts.
-- Firewall events.
-- Security alerts.
-- Events grouped by monitored system.
-- Event severity and detection trends.
-
-#### SOAR Operations
-
-The dashboard will display:
-
-- Total security events processed.
-- Successful automated responses.
-- Failed automated responses.
-- Processing duration.
-- Application availability.
-- Event processing rate.
-
-Dashboards and data source configurations will be maintained as version-controlled files where supported.
-
-### 5.6 Alerting
-
-Two alerting paths will be used.
-
-**Infrastructure and Application Metrics**
-
-Prometheus will evaluate metric-based alerting rules.
-
-Examples include:
-
-- High CPU utilization.
-- Low available disk space.
-- Unavailable monitoring targets.
-- SOAR application unavailability.
-- Increased SOAR processing errors.
-
-Triggered alerts will be routed through Alertmanager.
-
-**Security Log Events**
-
-Grafana-managed alert rules will query Loki using LogQL.
-
-Examples include:
-
-- Multiple failed SSH authentication attempts.
-- Unusual firewall connection patterns.
-- High frequency of blocked connections.
-
-Grafana will evaluate matching log counts or rates against configured thresholds.
-
-Security alerts will be delivered to the SOAR application through an authenticated HTTP webhook.
-
-Only alerts matching the selected security rules will trigger automated security responses.
-
-### 5.7 Alert Processing
-
-The alert processing workflow will follow these steps:
-
-1. A monitored system generates a metric or log event.
-2. Prometheus or Loki receives the telemetry.
-3. The appropriate alerting component evaluates a configured rule.
-4. An alert is generated when the rule condition is satisfied.
-5. The alert is forwarded to the SOAR API.
-6. The SOAR application validates and processes the event.
-7. The selected automated response is executed.
-8. The outcome is stored and exported as monitoring metrics.
-
-The SOAR application will normalize alerts from Grafana and Alertmanager into a common internal event structure.
-
-Duplicate alerts will be handled using an event fingerprint and a defined deduplication period.
-
-### 5.8 Monitoring Data Retention
-
-The initial retention periods will be:
-
-| Data | Retention |
-|---|---|
-| Prometheus metrics | 15 days |
-| Loki logs | 14 days |
-| PostgreSQL incidents | 90 days |
-| Operational backups | 7 days |
-
-Retention values are initial project targets and may be adjusted after storage utilization is measured.
-
-Log retention will be enforced through Loki's supported retention configuration.
-
-Prometheus retention will be configured through its storage settings.
-
-PostgreSQL incident records will be maintained through a scheduled retention process.
-
----
-
-## 6. SOAR Architecture
-
-### 6.1 Overview
-
-The Security Orchestration, Automation and Response system will process alerts generated by the monitoring environment and execute predefined actions.
-
-The SOAR application will be developed using Python and FastAPI.
-
-It will run in a Docker container on the SOAR EC2 instance.
-
-The application will consist of the following components:
-
-- Event receiver.
-- Event validation and normalization.
-- Rule engine.
-- Response execution modules.
-- Incident storage.
-- Health and performance monitoring.
-
-### 6.2 Event Receiver
-
-The event receiver will accept security alerts through an HTTP API.
-
-The primary endpoint will be:
-
-`POST /api/v1/events`
-
-The endpoint will receive alerts from Grafana and Alertmanager through the private network.
-
-Incoming requests will require authentication.
-
-The receiver will validate the incoming event structure and reject invalid requests.
-
-The following information will be extracted where available:
-
-- Event identifier.
-- Event type.
-- Severity.
-- Source system.
-- Source IP address.
-- Event timestamp.
-- Event description.
-- Alert status.
-- Associated metadata.
-
-Source IP addresses and event metadata will be treated as untrusted input.
-
-### 6.3 Internal Event Format
-
-Incoming alerts will be converted into a common internal structure.
+I tested DNS from both the gateway and the Linux VM.
 
 Example:
 
-```json
-{
-  "event_id": "evt-0001",
-  "event_type": "ssh_bruteforce",
-  "severity": "high",
-  "source": "innovatech-linux",
-  "source_ip": "10.30.0.50",
-  "timestamp": "2026-10-27T10:00:00Z",
-  "description": "Repeated failed SSH authentication attempts"
-}
+```bash
+dig @10.30.0.1 monitoring.innovatech.internal +short
 ```
 
-The example represents a simulated security event.
+The result was:
 
-Event identifiers will be used for incident tracking and duplicate detection.
+```text
+10.20.10.10
+```
 
-### 6.4 Rule Engine
+The other two hostnames also resolved correctly.
 
-The rule engine will evaluate normalized security events against predefined rules.
+The tests confirmed that DNS queries work from the tested on-premises systems after the persistent firewall configuration was reloaded.
 
-Rules will be selected using:
+At this stage, the DNS service has been verified using explicit queries. It is not configured as the default resolver for every machine.
+
+**Evidence:**
+
+- `docs/evidence/network/05-private-dns-gateway.png`
+- `docs/evidence/network/05-private-dns-linux.png`
+
+## 7. Monitoring Architecture
+
+### 7.1 Monitoring Overview
+
+I deployed the monitoring platform on the AWS Monitoring EC2 instance.
+
+It uses Docker Compose to run five services:
+
+| Service | Purpose |
+|---|---|
+| Prometheus | Collects and stores metrics |
+| Grafana | Displays dashboards |
+| Loki | Stores and queries logs |
+| Grafana Alloy | Collects and forwards telemetry |
+| Alertmanager | Handles Prometheus alerts |
+
+The monitoring stack is stored on the server under:
+
+`/opt/innovatech/monitoring`
+
+Each component runs in its own Docker container.
+
+The monitoring architecture diagram is stored in:
+
+`docs/diagrams/monitoring-architecture.png`
+
+### 7.2 Metrics Collection
+
+Prometheus collects infrastructure and application metrics.
+
+The monitored systems include AWS and on-premises servers, as well as the SOAR application.
+
+The collected information includes:
+
+- CPU usage.
+- Memory usage.
+- Disk usage.
+- System availability.
+- Process metrics.
+- SOAR application metrics.
+
+Prometheus uses scrape targets to collect the metrics through HTTP endpoints.
+
+The monitoring dashboard showed six healthy scrape targets during testing.
+
+### 7.3 Centralized Logging
+
+Loki is used for log storage.
+
+Grafana Alloy collects system and security logs and forwards them to Loki.
+
+The configured log sources include:
+
+| Log Job | Source |
+|---|---|
+| aws-monitoring | AWS monitoring system logs |
+| aws-monitoring-auth | Linux authentication logs |
+| onprem-firewall | On-premises gateway firewall logs |
+
+The on-premises firewall logs are transferred over the WireGuard VPN.
+
+This allows AWS and on-premises logs to be investigated from the same Grafana interface.
+
+### 7.4 LogQL Queries
+
+Grafana Explore supports querying Loki using LogQL.
+
+For example, I used:
+
+```logql
+{job="onprem-firewall"} |= "INNOVATECH_FW_DROP"
+```
+
+This filters firewall logs and shows blocked traffic events.
+
+I also used:
+
+```logql
+{job=~"aws-monitoring|onprem-firewall"}
+```
+
+This returns system logs from AWS and firewall logs from the on-premises environment.
+
+Both queries returned results during testing.
+
+### 7.5 Grafana Dashboards
+
+I created three main dashboards.
+
+#### Infrastructure Overview
+
+This dashboard shows:
+
+- CPU usage.
+- Memory usage.
+- Disk usage.
+- Server availability.
+- Monitoring target status.
+
+#### Security Logs Overview
+
+This dashboard shows:
+
+- Firewall events.
+- Authentication events.
+- System warnings.
+- Log activity over time.
+- Raw security logs.
+
+#### SOAR Security Operations
+
+This dashboard shows:
+
+- SOAR availability.
+- Processed alerts.
+- Duplicate alerts.
+- Failed processing.
+- Incident counts.
+- Response action counts.
+- Processing latency.
+- Process memory usage.
+
+The dashboards are maintained as JSON configuration files and can be updated through the monitoring CI/CD workflow.
+
+### 7.6 Alerting
+
+Prometheus evaluates infrastructure alert rules.
+
+The three configured rules are:
+
+| Alert | Purpose |
+|---|---|
+| ServerDown | Detects unavailable monitoring targets |
+| HighCPUUsage | Detects high CPU utilization |
+| HighMemoryUsage | Detects high memory utilization |
+
+The rules are loaded from:
+
+`/etc/prometheus/alerts.yml`
+
+Alertmanager is deployed to handle Prometheus alerts.
+
+During testing, all three alert rules were visible in their normal state.
+
+For security event processing, the SOAR log analyzer queries Loki directly and evaluates the collected firewall events.
+
+This is the security detection path demonstrated during the project. It is separate from a fully tested Grafana-alert-to-SOAR webhook workflow.
+
+### 7.7 Monitoring Limitations
+
+All monitoring services currently run on one EC2 instance.
+
+If that instance fails, centralized monitoring becomes unavailable until the server is restored.
+
+The monitoring system also depends on correct log forwarding, network connectivity and sufficient disk space.
+
+I haven't implemented a redundant monitoring cluster because it would increase complexity and costs beyond the needs of this project.
+
+**Evidence:**
+
+- `docs/evidence/monitoring/06-infrastructure-overview-A.png`
+- `docs/evidence/monitoring/06-infrastructure-overview-B.png`
+- `docs/evidence/monitoring/07-security-logs-overview-A.png`
+- `docs/evidence/monitoring/09-loki-firewall-query.png`
+- `docs/evidence/monitoring/10-multiple-log-sources.png`
+- `docs/evidence/monitoring/11-monitoring-alerting.png`
+
+## 8. SOAR Architecture
+
+### 8.1 SOAR Overview
+
+I developed a custom SOAR application using Python and Flask.
+
+The application runs on the AWS SOAR EC2 instance at:
+
+`10.20.20.10`
+
+Gunicorn hosts the Flask application on port 8000, while systemd manages the application service.
+
+The SOAR system is responsible for:
+
+- Receiving security alerts.
+- Validating incoming requests.
+- Evaluating security rules.
+- Detecting duplicate alerts.
+- Executing predefined response actions.
+- Recording incidents and actions.
+- Providing monitoring metrics.
+
+### 8.2 Application Structure
+
+The application source code is maintained in the GitHub repository under:
+
+`app/soar`
+
+The main modules are:
+
+| Module | Purpose |
+|---|---|
+| main.py | Flask API and request processing |
+| rules.py | Rule evaluation |
+| actions.py | Response actions |
+| dedup.py | Duplicate alert detection |
+| log_analyzer.py | Loki firewall log analysis |
+| log_response.py | Processes findings through SOAR |
+
+Separating the application into modules makes it easier to test and maintain the individual parts.
+
+### 8.3 API Endpoints
+
+The main API endpoints are:
+
+| Endpoint | Method | Purpose |
+|---|---|---|
+| /alerts | POST | Receive security alerts |
+| /health | GET | Check application availability |
+| /metrics | GET | Export Prometheus metrics |
+
+The `/alerts` endpoint requires authentication.
+
+Incoming events are checked before the rule engine processes them.
+
+### 8.4 Event Processing
+
+The basic event-processing flow is:
+
+1. A security event is received.
+2. The incoming information is validated.
+3. The event is checked against existing fingerprints.
+4. The rule engine evaluates the event.
+5. Matching response actions are selected.
+6. The selected actions are executed.
+7. The results are recorded.
+8. Prometheus metrics are updated.
+
+Duplicate detection is important because monitoring systems can generate repeated alerts for the same underlying event.
+
+Without deduplication, the same incident could generate multiple unnecessary response actions.
+
+### 8.5 Rule Evaluation
+
+The rule engine uses the event information to determine which responses should be executed.
+
+Rules can consider:
 
 - Event type.
 - Severity.
 - Source.
-- Event attributes.
-- Defined response conditions.
+- Event status.
+- Other event attributes.
 
-Initial rules will be stored as version-controlled YAML configuration.
+The rule evaluation logic is maintained in Python.
 
-Example rule definitions:
+This means I can add or modify rules without replacing the entire SOAR application.
 
-| Rule | Condition | Response |
-|---|---|---|
-| SSH-001 | Repeated failed SSH login alert | Create incident and send notification |
-| FW-001 | Confirmed simulated malicious source | Create incident and request firewall block |
-| SYS-001 | Suspicious process alert | Create incident and send notification |
+### 8.6 Response Actions
 
-The rule engine will support adding new detection and response rules without changing the event receiver.
+The implemented response actions include:
 
-Rules will be validated before they are loaded.
+| Action | Purpose |
+|---|---|
+| record_incident | Record the security incident |
+| notify_operator | Prepare an operator notification |
+| simulate_ip_containment | Simulate blocking a suspicious IP |
+| simulate_service_containment | Simulate restricting a service |
 
-### 6.5 Automated Response Actions
+The real firewall is not automatically modified by the current SOAR demonstration.
 
-The SOAR system will implement three initial response capabilities.
+I chose simulated containment to prevent an incorrect detection from accidentally blocking legitimate traffic or breaking the VPN.
 
-#### Action 1 — Incident Recording
+### 8.7 SOAR Storage
 
-When an event matches a rule, the SOAR application will create or update an incident in PostgreSQL.
+The application uses SQLite and JSONL files.
 
-The record will include:
+SQLite stores alert fingerprints used for deduplication.
 
-- Event details.
-- Matched rule.
-- Incident status.
+JSONL files store incident information, execution records and prepared notifications.
+
+This avoids the need for a separate PostgreSQL database service.
+
+The approach is suitable for the current single-instance demonstration, although it is not designed for a large distributed SOAR deployment.
+
+### 8.8 SOAR Monitoring
+
+The application exposes Prometheus-compatible metrics through:
+
+`GET /metrics`
+
+Prometheus collects these metrics from the monitoring server.
+
+Grafana displays them in the SOAR Security Operations dashboard.
+
+This makes it possible to monitor the SOAR system in addition to monitoring the infrastructure it protects.
+
+### 8.9 SOAR Architecture Diagram
+
+The SOAR architecture diagram is stored at:
+
+`docs/diagrams/soar-architecture.png`
+
+The final diagram should represent the implemented Flask application, Loki log analysis, SQLite/JSONL storage and simulated containment actions.
+
+## 9. Firewall Log Analysis and Security Detection
+
+### 9.1 Detection Approach
+
+I wanted the SOAR demonstration to use actual infrastructure logs rather than only manually created JSON alerts.
+
+For this reason, I developed a Python log analyzer that retrieves blocked connection events from Loki.
+
+The analyzer extracts information from firewall logs and looks for suspicious patterns.
+
+The main demonstrated detection is possible port scanning.
+
+### 9.2 Port-Scanning Detection
+
+The analyzer checks for repeated blocked TCP connection attempts targeting different destination ports.
+
+It uses the information available in the firewall log messages, including:
+
+- Source IP.
+- Destination IP.
+- Protocol.
+- Destination port.
+- Event time.
+
+Multiple attempts to different ports can indicate scanning behavior.
+
+The analyzer groups the relevant connection information and generates a security finding when the defined detection conditions are met.
+
+### 9.3 Controlled Test
+
+I generated 12 blocked TCP attempts from:
+
+`10.30.0.10`
+
+The destination was:
+
+`10.30.0.1`
+
+The traffic targeted four ports:
+
+- 45678
+- 45679
+- 45680
+- 45681
+
+The gateway blocked the traffic and recorded the events.
+
+Grafana Alloy forwarded the logs to Loki.
+
+The log analyzer then examined the collected events.
+
+The test results were:
+
+| Measurement | Result |
+|---|---|
+| Raw logs examined | 24 |
+| Relevant TCP events | 12 |
+| Different destination ports | 4 |
+| Findings | 1 |
+| Event type | PossiblePortScan |
+| Severity | Warning |
+
+The generated finding was processed by the SOAR application.
+
+The response included incident recording and notification preparation.
+
+### 9.4 Deduplication Test
+
+I executed the same analysis again using the same time window.
+
+The second execution produced a duplicate result.
+
+The SOAR application recognized the fingerprint of the previously processed finding.
+
+This prevented the same response actions from being repeated unnecessarily.
+
+### 9.5 Local Execution Inspector
+
+To make the security processing easier to demonstrate, I created a local SOAR Execution Inspector.
+
+It runs on Windows using:
+
+```powershell
+py -3.11 tools/soar_viewer.py
+```
+
+The viewer is accessed through:
+
+`http://127.0.0.1:5050`
+
+The viewer displays imported analysis results and the Python functions responsible for different processing steps.
+
+It shows:
+
+- Firewall log information.
+- Detected patterns.
+- Event classification.
+- Rule evaluation.
 - Response actions.
-- Execution results.
-- Timestamps.
+- Deduplication results.
+- Python source code.
 
-#### Action 2 — Security Notification
+The viewer is a local demonstration tool, not another AWS service.
 
-The SOAR application will send a notification containing relevant information about the detected incident.
+Some displayed log examples are shortened for readability, so they should not be treated as complete original firewall log exports.
 
-The notification will include:
+**Evidence:**
 
-- Incident identifier.
-- Event type.
-- Severity.
-- Source system.
-- Detection time.
-- Response status.
+- `docs/evidence/soar/12-port-scan-detection.png`
+- `docs/evidence/soar/13-soar-code-inspector.png`
+- `docs/evidence/soar/14-soar-rule-evaluation.png`
+- `docs/evidence/soar/15-soar-alert-deduplication.png`
+- `docs/evidence/security/16-firewall-blocked-traffic.png`
 
-The notification destination will be configured through environment settings.
+## 10. Infrastructure Automation
 
-#### Action 3 — Simulated IP Blocking
+### 10.1 Terraform
 
-The SOAR application will support blocking a simulated malicious IP address on the security server.
+Terraform is responsible for provisioning the AWS infrastructure.
 
-The response will use a restricted management API or controlled automation interface.
-
-Before executing the block action, the system will:
-
-1. Validate the source IP address.
-2. Confirm that the event matches an authorized response rule.
-3. Check that the IP belongs to an approved demonstration network.
-4. Check that the IP is not on the protected address list.
-5. Execute the firewall operation.
-6. Record the result.
-
-Administrative addresses, VPN endpoints and infrastructure management addresses will be excluded from automatic blocking.
-
-Automatic firewall changes will be restricted to the simulated security environment.
-
-### 6.6 Response Execution
-
-Response actions will return a structured execution result.
-
-Each result will contain:
-
-- Action identifier.
-- Incident identifier.
-- Action type.
-- Execution status.
-- Start time.
-- Completion time.
-- Error details where applicable.
-
-The SOAR system will distinguish successful, failed and skipped actions.
-
-Failed actions will be recorded and included in monitoring metrics.
-
-Actions will support idempotent behavior where practical to prevent repeated alerts from creating unintended duplicate effects.
-
-### 6.7 SOAR API Endpoints
-
-The application will expose the following endpoints:
-
-| Endpoint | Method | Purpose |
-|---|---|---|
-| `/health` | GET | Application health check |
-| `/metrics` | GET | Prometheus metrics |
-| `/api/v1/events` | POST | Receive security events |
-| `/api/v1/incidents` | GET | Retrieve incident records |
-| `/api/v1/incidents/{id}` | GET | Retrieve an incident |
-| `/api/v1/rules` | GET | List configured rules |
-
-Administrative endpoints will require authentication.
-
-The metrics endpoint will be restricted to authorized Prometheus collectors.
-
-### 6.8 SOAR Monitoring
-
-The application will expose custom Prometheus metrics.
-
-Planned metrics include:
-
-- `soar_events_processed_total`
-- `soar_actions_total`
-- `soar_action_failures_total`
-- `soar_event_processing_duration_seconds`
-- `soar_active_incidents`
-
-Metric labels will identify event types, action types and execution status without including individual incident identifiers.
-
-Prometheus will scrape the metrics endpoint.
-
-Grafana will visualize the collected metrics in the SOAR Operations dashboard.
-
----
-
-## 7. Database Architecture
-
-### 7.1 PostgreSQL
-
-PostgreSQL will provide persistent storage for security incidents and automated response execution records.
-
-The database will run in a Docker container on the SOAR EC2 instance.
-
-A dedicated persistent volume will store PostgreSQL data.
-
-The database port will not be published to the public network.
-
-Only authorized application containers and administrative maintenance processes will have access to the database.
-
-### 7.2 Data Model
-
-The database will contain the following primary tables.
-
-**incidents**
-
-Stores detected security incidents.
-
-Fields:
-
-- id
-- event_id
-- event_type
-- severity
-- source
-- source_ip
-- description
-- status
-- created_at
-- updated_at
-
-**rules**
-
-Stores information about active and configured security rules.
-
-Fields:
-
-- id
-- rule_name
-- description
-- severity
-- enabled
-- created_at
-
-**action_executions**
-
-Stores automated response execution records.
-
-Fields:
-
-- id
-- incident_id
-- rule_id
-- action_type
-- execution_status
-- started_at
-- completed_at
-- error_message
-
-The final database schema will define primary keys, foreign keys, indexes and field constraints.
-
-### 7.3 Persistence
-
-PostgreSQL will use a Docker volume backed by persistent EC2 storage.
-
-Database data will remain available after container restarts and recreation.
-
-Persistent storage will not be deleted during ordinary application deployments.
-
-### 7.4 Database Backups
-
-Database backups will be created using PostgreSQL backup utilities.
-
-Backups will be stored separately from the live database volume.
-
-The recovery process will be tested by restoring a backup into a clean database environment.
-
-The initial backup retention target is seven days.
-
-Backup execution and restoration results will be recorded.
-
----
-
-## 8. Infrastructure Automation
-
-### 8.1 Terraform
-
-Terraform will provision and manage the AWS infrastructure.
-
-Resources will include:
+It manages resources such as:
 
 - VPC.
 - Subnets.
 - Route tables.
-- Internet gateway where required.
-- Security Groups.
+- Security groups.
 - EC2 instances.
-- Storage volumes.
-- Private DNS records.
-- Supporting IAM resources.
+- IAM roles.
+- Instance profiles.
+- Network gateways.
 
-Terraform configuration will be divided into logical files or modules.
+The configuration is stored in GitHub so infrastructure changes can be reviewed and tracked.
 
-Infrastructure state will be stored remotely with access restrictions and locking.
+Terraform state is stored in Amazon S3.
 
-Infrastructure changes will be reviewed through Terraform plans before deployment.
+Before making infrastructure changes, Terraform can generate a plan showing which resources will be created, modified or destroyed.
 
-#### Terraform State Management
+### 10.2 Terraform Validation
 
-Terraform state is stored remotely in a dedicated Amazon S3 bucket in the eu-central-1 region.
+I created a GitHub Actions workflow that validates Terraform configuration.
 
-The S3 bucket uses versioning, AES256 server-side encryption and public access restrictions.
+The workflow performs formatting and configuration checks.
 
-Terraform uses S3 lockfiles to prevent concurrent operations from modifying the same infrastructure state.
+It runs using my local Windows self-hosted runner.
 
-The backend configuration is maintained in `terraform/backend.tf`, while Terraform state files are excluded from version control.
+This helps detect syntax and configuration errors before infrastructure changes are applied.
 
-#### AWS Resource Management
+### 10.3 Ansible
 
-Terraform manages the network infrastructure, Security Groups, IAM roles and EC2 instance profiles.
+Ansible is used for centralized operating-system updates.
 
-The monitoring, SOAR and VPN gateway environments are configured as separate infrastructure components.
+The control node is:
 
-All infrastructure resources use consistent project and environment tags to support identification and management.
+`cs2-onprem-linux`
 
-### 8.2 Ansible
+The managed systems are:
 
-Ansible will configure Linux systems after infrastructure provisioning.
+- `cs2-onprem-linux`
+- `cs2-onprem-security`
 
-Playbooks will manage:
+The update playbook:
 
-- Operating system packages.
-- Docker installation.
-- Grafana Alloy installation.
-- WireGuard configuration.
-- Host firewall configuration.
-- Application directories.
-- Service deployment.
-- Software updates.
-- Service health verification.
+1. Verifies the target operating system.
+2. Refreshes APT package information.
+3. Installs available upgrades.
+4. Checks whether a reboot is required.
+5. Reports the execution results.
 
-Ansible inventories will distinguish AWS and on-premises hosts.
+It uses `serial: 1` so the machines are processed individually.
 
-### 8.3 Docker Compose
+The playbook does not automatically reboot the systems.
 
-Docker Compose will define application services.
+### 10.4 Ansible Testing
 
-The monitoring configuration will contain:
+I successfully executed the update playbook against both managed machines.
 
-- Grafana.
-- Prometheus.
-- Loki.
-- Alertmanager.
+The results were:
 
-The SOAR configuration will contain:
+| Machine | OK | Changed | Failed | Unreachable |
+|---|---:|---:|---:|---:|
+| cs2-onprem-linux | 6 | 1 | 0 | 0 |
+| cs2-onprem-security | 6 | 0 | 0 | 0 |
 
-- FastAPI application.
-- PostgreSQL.
+Both systems completed the execution without errors.
 
-Services will use internal Docker networks and persistent volumes where required.
+**Evidence:**
 
-Container versions will be pinned to tested versions rather than using unrestricted latest tags.
+- `docs/evidence/updates/33-ansible-multi-server-update.png`
 
-### 8.4 GitHub Actions
+## 11. Automatic System Updates
 
-GitHub Actions will manage application and infrastructure validation.
+### 11.1 unattended-upgrades
 
-The CI/CD process will include:
+I configured Ubuntu unattended-upgrades on five Linux machines.
 
-1. Source code checkout.
-2. Python dependency installation.
-3. Python unit tests.
-4. Terraform formatting and validation.
-5. Terraform plan generation for infrastructure changes.
-6. Container image build.
-7. Deployment authorization.
-8. SOAR application deployment.
-9. Post-deployment health checks.
+These are:
 
-Deployment workflows will run on a configured self-hosted runner.
+- AWS Monitoring.
+- AWS SOAR.
+- On-premises Gateway.
+- On-premises Linux.
+- On-premises Security.
 
-Credentials will be stored outside the Git repository and made available only to authorized workflows.
+The service automatically checks for available package updates and installs updates based on its configuration.
 
-Production-impacting infrastructure changes will require an approval step or an explicitly authorized deployment workflow.
+This reduces the need to manually perform routine package maintenance.
 
----
+### 11.2 Verification
 
-## 9. Automated Updates
+I inspected the unattended-upgrades configuration and execution logs on the servers.
 
-### 9.1 Operating System Updates
+The evidence shows successful package installations on the AWS Monitoring, AWS SOAR, on-premises Linux and on-premises Security machines.
 
-Ansible will perform centralized operating system updates across multiple Linux systems.
+The on-premises Gateway also performed automatic update checks, although the captured logs did not show package installation during that check.
 
-The update process will:
+### 11.3 Difference Between Ansible and unattended-upgrades
 
-1. Connect to the selected managed hosts.
-2. Refresh package information.
-3. Install approved updates.
-4. Detect whether a reboot is required.
-5. Reboot systems when necessary.
-6. Verify that the systems become reachable.
-7. Check application and service health.
-8. Record the execution results.
+These tools solve related but different problems.
 
-Updates will be performed in controlled batches to reduce simultaneous service interruption.
+Ansible provides centralized management by allowing an administrator to execute updates on multiple machines from one control node.
 
-### 9.2 Application Updates
+unattended-upgrades runs independently on each machine according to its configured update schedule.
 
-Monitoring and SOAR application containers will use version-controlled images and configuration.
+The Ansible playbook currently covers two machines, while unattended-upgrades is enabled on all five.
 
-Application updates will follow this process:
+**Evidence:**
 
-1. Update the application or image version.
-2. Execute automated tests.
-3. Build or obtain the required container image.
-4. Deploy the updated service.
-5. Verify health checks and monitoring.
-6. Restore the previous version if validation fails.
+- `docs/evidence/updates/24-automated-system-updates.png`
+- `docs/evidence/updates/25-soar-automatic-updates.png`
+- `docs/evidence/updates/26-soar-update-execution.png`
+- `docs/evidence/updates/27-onprem-gateway-updates.png`
+- `docs/evidence/updates/28-onprem-gateway-update-execution.png`
+- `docs/evidence/updates/29-onprem-linux-updates.png`
+- `docs/evidence/updates/30-onprem-linux-update-execution.png`
+- `docs/evidence/updates/31-onprem-security-updates.png`
+- `docs/evidence/updates/32-onprem-security-update-execution.png`
+- `docs/evidence/updates/33-ansible-multi-server-update.png`
 
-The deployment process will preserve persistent database and monitoring data volumes.
+## 12. CI/CD Design
 
-### 9.3 Update Verification
+### 12.1 GitHub Actions
 
-Evidence will include:
+I use GitHub Actions for automated testing and deployment.
 
-- Ansible execution results.
-- Package versions before and after updates.
-- Application container versions.
-- Service availability checks.
-- Failed update reports.
-- Recovery results where applicable.
+The workflows run on a Windows self-hosted runner.
 
----
+The repository contains three main pipelines:
 
-## 10. Resilience and Recovery
-
-### 10.1 Design-for-Failure
-
-The infrastructure will support recovery from isolated application and infrastructure failures.
-
-The initial deployment will prioritize controlled recovery rather than fully redundant multi-node application clusters.
-
-Critical application data will use persistent storage, and service recovery procedures will be documented.
-
-### 10.2 Container Recovery
-
-Application containers will use restart policies.
-
-A container crash will trigger an automatic restart where possible.
-
-Health checks will detect applications that remain unresponsive.
-
-### 10.3 EC2 Recovery
-
-EC2 instances will be provisioned through Terraform.
-
-Application configuration will be managed through Ansible and Docker Compose.
-
-If an instance must be replaced, the system configuration can be recreated from version-controlled infrastructure and configuration definitions.
-
-Application data will be restored from the available persistent storage or backup.
-
-### 10.4 Database Recovery
-
-Database recovery will use a verified PostgreSQL backup.
-
-The restoration procedure will:
-
-1. Stop dependent application services.
-2. Prepare the replacement database.
-3. Restore the selected backup.
-4. Verify database integrity.
-5. Restart the SOAR application.
-6. Verify incident access and event processing.
-
-### 10.5 Hybrid Connectivity Failure
-
-If the VPN becomes unavailable:
-
-- The monitoring system will detect unavailable remote targets.
-- Existing monitoring data will remain accessible.
-- Cloud-hosted SOAR services will continue operating.
-- Events requiring access to the on-premises environment may fail or be delayed.
-- Failed response attempts will be recorded.
-
-Recovery will involve restoring the VPN connection and verifying routing, DNS and telemetry collection.
-
-### 10.6 Recovery Objectives
-
-The following recovery targets will be used for initial testing.
-
-| Component | Recovery Objective |
+| Pipeline | Purpose |
 |---|---|
-| Application container | Within 2 minutes |
-| SOAR application restart | Within 2 minutes |
-| Monitoring server restoration | Within 30 minutes |
-| SOAR server restoration | Within 30 minutes |
-| PostgreSQL backup restoration | Within 30 minutes |
-| VPN reconnection | Within 10 minutes |
+| Infrastructure Checks | Terraform validation |
+| SOAR CI/CD | Python tests and SOAR deployment |
+| Monitoring CI/CD | Grafana dashboard validation and deployment |
 
-These are engineering targets, not guaranteed service levels.
+### 12.2 SOAR CI/CD
 
-They will be validated and adjusted using measured results during resilience testing.
+The SOAR pipeline validates the Python application before deployment.
 
-### 10.7 Failure Testing
+After successful tests, the workflow prepares a deployment package.
 
-Failure tests will include:
+The package is uploaded to Amazon S3.
 
-- Monitoring container termination.
-- SOAR application termination.
-- PostgreSQL container restart.
-- EC2 restart.
-- VPN connection interruption.
-- Database backup restoration.
-- Loss and restoration of telemetry collection.
+AWS Systems Manager is then used to execute the deployment commands on the private SOAR EC2 instance.
 
-Test results will include the observed impact, recovery process, recovery time and any data loss.
+This avoids needing public SSH access to deploy application changes.
 
----
+The deployment updates the application files and restarts the SOAR service.
 
-## 11. Infrastructure Capacity
+### 12.3 Monitoring CI/CD
 
+The monitoring pipeline validates Grafana dashboard JSON files.
 
-### 11.1 Compute Resources
+After successful validation, the workflow deploys the updated dashboards to the AWS Monitoring instance.
 
-The AWS infrastructure consists of three EC2 instances running Ubuntu Server 24.04 LTS.
+This allows dashboard changes to be maintained through Git instead of depending only on manual changes in Grafana.
 
-| Resource | Instance Type | vCPU | RAM | EBS Storage |
-|---|---|---|---|---|
-| Monitoring Server | t3.medium | 2 | 4 GiB | 40 GiB gp3 |
-| SOAR Server | t3.small | 2 | 2 GiB | 20 GiB gp3 |
-| VPN Gateway | t3.micro | 2 | 1 GiB | 12 GiB gp3 |
+### 12.4 Pipeline Failure Protection
 
-The monitoring instance has additional memory allocated for Grafana, Prometheus, Loki and Alertmanager.
+I tested the monitoring pipeline by introducing an invalid dashboard JSON file on a separate branch.
 
-The SOAR instance runs FastAPI and PostgreSQL, while the gateway handles WireGuard, private network routing and DNS forwarding.
+The validation job failed.
 
-Instance sizing is based on the expected development and testing workload. Resource consumption will be measured through Prometheus and adjusted if necessary.
+Because the validation failed, the deployment job was skipped.
 
-All EC2 root volumes use encrypted gp3 storage. The application instances have private IP addresses, while the gateway uses an Elastic IP for VPN connectivity.
+This demonstrated that the pipeline prevents invalid dashboard configuration from being deployed through the normal workflow.
 
-T3 instances use standard CPU credit mode to avoid additional unlimited-mode CPU credit charges.
+### 12.5 CI/CD Limitations
 
-The deployment prioritizes low operating costs and controlled recovery over multi-node high availability.
+The pipelines depend on the local self-hosted runner.
 
-### 11.2 Storage
+The runner must be online for the workflows to execute.
 
-The monitoring server will require persistent storage for:
+AWS authentication also needs to be available to the deployment workflow.
 
-- Prometheus time-series data.
-- Loki log data.
-- Grafana configuration and internal application data.
+For a production environment, the runner and deployment authentication would need dedicated infrastructure and a more permanent credential-management approach.
 
-The SOAR server will require persistent storage for:
+**Evidence:**
 
-- PostgreSQL database files.
-- SOAR application configuration.
-- Incident processing records.
+- `docs/evidence/cicd/17-soar-cicd-success.png`
+- `docs/evidence/cicd/18-monitoring-cicd-success.png`
+- `docs/evidence/cicd/19-terraform-validation.png`
+- `docs/evidence/cicd/20-pipeline-failure-protection.png`
 
-Storage utilization will be monitored through Prometheus.
+## 13. Security Design
 
-Retention policies will limit unnecessary data growth.
+### 13.1 Private Networking
 
-### 11.3 Capacity Validation
+The monitoring and SOAR servers are placed in private AWS subnets.
 
-The infrastructure will be tested using simulated security events and monitoring workloads.
+Only the AWS gateway requires a public IP address for VPN connectivity.
 
-Tests will measure:
+The security groups restrict application access to specific network sources.
 
-- CPU utilization.
-- Memory utilization.
-- Disk usage.
-- Metrics ingestion.
-- Log processing.
-- SOAR processing duration.
-- Automated response performance.
+### 13.2 Administrative Access
 
-Instance sizing and retention settings will be adjusted if the baseline configuration cannot reliably support the expected workload.
+AWS Systems Manager Session Manager is used to access the EC2 instances.
 
----
+This avoids exposing SSH access directly to the public internet.
 
-## 12. Deployment and Handoff
+### 13.3 Firewall Policies
 
-### 12.1 Deployment Process
+The on-premises gateway uses nftables with a default-drop input policy.
 
-The infrastructure deployment will follow this order:
+The rules permit the required VPN, SSH, monitoring and DNS traffic.
 
-1. Provision AWS resources through Terraform.
-2. Configure Linux instances using Ansible.
-3. Deploy the on-premises virtual machines.
-4. Establish WireGuard VPN connectivity.
-5. Configure routing, firewall rules and DNS.
-6. Deploy the monitoring stack.
-7. Configure telemetry collection.
-8. Deploy PostgreSQL and the SOAR application.
-9. Configure alert forwarding.
-10. Execute end-to-end integration tests.
+Other incoming traffic is blocked and can be logged.
 
-### 12.2 Portable Demonstration
+### 13.4 SOAR Authentication
 
-A separate Docker Compose deployment will be provided for application-level evaluation.
+The SOAR API requires authentication for incoming alerts.
 
-The demonstration will contain the monitoring services, SOAR application, PostgreSQL and simulated event sources.
+This prevents arbitrary unauthenticated requests from being processed through the normal alert endpoint.
 
-The demonstration environment will allow security event processing to be tested without access to the original on-premises machines.
+### 13.5 Controlled Response Actions
 
-It will not be considered sufficient evidence of real hybrid VPN connectivity, cloud segmentation or AWS networking.
+The SOAR application includes validation and simulated containment functions.
 
-### 12.3 Operational Documentation
+These were designed to avoid accidentally blocking management addresses or interfering with critical network services.
 
-The final operations manual will include:
+The current demonstration does not perform live firewall containment.
 
-- Required software and dependencies.
-- Infrastructure deployment commands.
-- Configuration instructions.
-- Monitoring access instructions.
-- Security event simulation.
-- SOAR operation and troubleshooting.
-- Automated updates.
-- Backup and recovery.
-- Portable demonstration setup.
-- Infrastructure teardown.
+### 13.6 Credentials
 
----
+WireGuard private keys and AWS credentials are not intended to be stored in Git.
 
-## 13. Technical Design Summary
+Deployment credentials and application secrets must be handled separately from public source code and documentation.
 
-The infrastructure combines AWS-hosted monitoring and security automation with independently operated on-premises systems.
+## 14. Resilience and Recovery
 
-The selected architecture provides:
+### 14.1 Design Approach
 
-- Private network segmentation.
-- Encrypted hybrid connectivity.
-- Centralized metrics and log collection.
-- Event-driven security alerting.
-- Automated SOAR responses.
-- Persistent incident storage.
-- Infrastructure provisioning through Terraform.
-- Centralized configuration and updates through Ansible.
-- Automated testing and deployment through GitHub Actions.
-- Documented service and infrastructure recovery procedures.
+The environment is designed to support recovery from individual service failures.
 
-The infrastructure will be validated through functional, integration, security and resilience testing.
+It is not a fully redundant multi-region or multi-node high-availability platform.
 
-The final deployed configuration and any changes from this design will be recorded in the as-built architecture documentation.
+The main recovery approach uses service management, Infrastructure as Code and documented operating procedures.
+
+### 14.2 Monitoring Failure Test
+
+I tested recovery by stopping the Grafana container.
+
+The other monitoring containers remained running.
+
+I then manually restarted Grafana and checked its health endpoint.
+
+The endpoint returned HTTP 200, and the application database status was healthy.
+
+This confirms that the affected service could be restored without restarting the entire monitoring stack.
+
+### 14.3 Recovery Limitations
+
+The test demonstrates manual recovery, not automatic failover.
+
+I haven't measured an exact recovery time for the test.
+
+I also haven't demonstrated a full backup restoration of the monitoring data or SOAR records.
+
+These are important differences between a working development environment and a production-ready infrastructure.
+
+### 14.4 Network Failure Risks
+
+The AWS gateway and on-premises gateway are both important network components.
+
+If either gateway becomes unavailable, communication between the two environments can stop.
+
+The monitoring system can detect some unavailable services through Prometheus targets, but the VPN itself doesn't have automatic failover in the current design.
+
+**Evidence:**
+
+- `docs/evidence/resilience/21-monitoring-health-before-test.png`
+- `docs/evidence/resilience/22-monitoring-component-failure.png`
+- `docs/evidence/resilience/23-monitoring-component-recovery.png`
+
+## 15. Infrastructure Costs
+
+### 15.1 AWS Resources
+
+The infrastructure uses three AWS EC2 instances.
+
+| Resource | Instance Type |
+|---|---|
+| Monitoring | t3.medium |
+| SOAR | t3.small |
+| Gateway | t3.micro |
+
+The instances use gp3 EBS volumes.
+
+I avoided AWS-managed monitoring and NAT services because the project can demonstrate the required functionality using self-hosted tools.
+
+### 15.2 Cost Reduction
+
+To limit AWS spending, I:
+
+- Use relatively small EC2 instances.
+- Run monitoring services on one monitoring server.
+- Use an EC2 gateway instead of a managed NAT Gateway.
+- Use WireGuard instead of a managed Site-to-Site VPN.
+- Use open-source monitoring and automation tools.
+- Stop the EC2 instances when I'm not working on the infrastructure.
+
+Stopping the instances reduces compute charges, but EBS storage and public IPv4 allocations can still generate costs.
+
+### 15.3 Trade-Offs
+
+These decisions reduce operating costs but also introduce limitations.
+
+For example, the monitoring server and gateway are single points of failure.
+
+A production environment would need additional redundancy, backup automation and stronger recovery procedures.
+
+## 16. Testing Overview
+
+I tested the infrastructure at different levels.
+
+### 16.1 Network Tests
+
+- AWS EC2 health checks.
+- Security group inspection.
+- WireGuard tunnel status.
+- Private Grafana connectivity.
+- Internal DNS resolution.
+- Firewall blocking and logging.
+
+### 16.2 Monitoring Tests
+
+- Prometheus scrape targets.
+- Grafana dashboards.
+- Loki firewall log queries.
+- Multiple log sources.
+- Prometheus alert rules.
+
+### 16.3 SOAR Tests
+
+- Firewall log analysis.
+- Port-scanning detection.
+- Alert processing.
+- Rule evaluation.
+- Incident recording.
+- Notification preparation.
+- Duplicate detection.
+- SOAR monitoring metrics.
+
+### 16.4 Automation Tests
+
+- Terraform validation.
+- SOAR CI/CD deployment.
+- Monitoring CI/CD deployment.
+- Invalid dashboard rejection.
+- Ansible multi-node updates.
+- unattended-upgrades execution.
+
+### 16.5 Recovery Tests
+
+- Monitoring service health before failure.
+- Grafana container stopped.
+- Remaining monitoring services kept running.
+- Grafana manually restarted.
+- Grafana health endpoint checked after recovery.
+
+## 17. Current Limitations
+
+The infrastructure is working for the main project demonstrations, but there are still some limitations.
+
+| Area | Limitation |
+|---|---|
+| Monitoring | Runs on one EC2 instance without a redundant server |
+| VPN | No automatic gateway failover |
+| DNS | Explicit DNS queries tested, but not default resolution everywhere |
+| SOAR notifications | Notifications prepared locally rather than delivered externally |
+| SOAR containment | Simulated rather than applied to the real firewall |
+| SOAR storage | SQLite and JSONL instead of a distributed database |
+| Backups | Complete backup and restoration tests not yet demonstrated |
+| Recovery | Manual Grafana recovery demonstrated; automatic recovery not verified |
+| Updates | Ansible centralizes updates for two machines, not the entire environment |
+| CI/CD | Depends on the availability of the Windows self-hosted runner |
+| Performance | No large-scale load or capacity benchmark |
+
+## 18. Current Implementation
+
+The project currently has a working hybrid infrastructure connecting AWS and VirtualBox through WireGuard.
+
+The current design meets the main goals of the development environment, while the remaining recovery, backup and production-readiness limitations are documented separately.

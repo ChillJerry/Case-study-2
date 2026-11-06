@@ -1,50 +1,99 @@
-# Centralized OS Update Automation — Ansible
+# Centralized System Updates
 
-## Objective
+## 1. Overview
 
-Implement centralized, repeatable Ubuntu package updates across multiple systems without manually logging into each server to install updates.
+I use Ansible to update multiple Linux machines from one control node and unattended-upgrades to install updates automatically on individual servers.
 
-## Architecture
+This reduces manual maintenance and helps keep the infrastructure updated.
 
-The `cs2-onprem-linux` VirtualBox VM operates as the Ansible control node.
+## 2. Ansible Configuration
 
-The managed systems are:
+I configured `cs2-onprem-linux` as the Ansible control node.
 
-- `cs2-onprem-linux` — local connection
-- `cs2-onprem-security` — SSH connection over the internal network (`10.30.0.20`)
+The playbook manages two Ubuntu machines:
 
-The on-premises gateway is excluded from automatic package updates to avoid disrupting network connectivity.
+| Machine | IP Address | Connection |
+|---|---|---|
+| cs2-onprem-linux | 10.30.0.10 | Local |
+| cs2-onprem-security | 10.30.0.20 | SSH |
 
-## Implementation
+The on-premises gateway is excluded from the playbook to avoid interrupting network connectivity during updates.
 
-Ansible uses an inventory and version-controlled YAML playbook maintained in the Case Study 2 GitHub repository.
+## 3. Update Playbook
 
-The update playbook:
+The Ansible playbook performs the following tasks:
 
-1. Verifies that each target runs Ubuntu.
-2. Refreshes the APT package cache.
-3. Installs available package upgrades.
-4. Checks whether a reboot is required.
-5. Reports the result for each machine.
+- Checks that the target machine is running Ubuntu.
+- Refreshes the APT package cache.
+- Installs available package upgrades.
+- Checks whether a reboot is required.
+- Reports the results for each machine.
 
-The playbook uses `serial: 1` to process machines individually and does not perform automatic reboots.
+I use `serial: 1` so the machines are updated one at a time. Reboots are reported but not performed automatically.
 
-SSH public-key authentication is used for remote access, with sudo privilege escalation for package management.
+The playbook and inventory are stored in the GitHub repository.
 
-## Validation
+## 4. Ansible Testing
 
-The implementation was tested against both managed Ubuntu systems.
+I ran the playbook against both managed machines.
 
-Both hosts completed the update workflow without failed tasks or connectivity errors. Subsequent connectivity checks passed, and simulated APT upgrades reported no remaining packages to upgrade.
+| Machine | OK | Changed | Failed | Unreachable |
+|---|---:|---:|---:|---:|
+| cs2-onprem-linux | 6 | 1 | 0 | 0 |
+| cs2-onprem-security | 6 | 0 | 0 | 0 |
 
-A repeat execution is used to assess idempotency.
+Both machines completed the execution without failed or unreachable tasks.
 
-## Limitations
+The playbook also supports repeated execution without reinstalling packages that are already up to date.
 
-The implementation currently covers two on-premises Ubuntu machines. The AWS instances and VPN gateway are not included in automated package updates.
+**Evidence:**
 
-Reboots are reported but remain administrator-controlled. The playbook is executed manually from the centralized controller rather than through a scheduled automation.
+`docs/evidence/updates/33-ansible-multi-server-update.png`
 
-## Conclusion
+## 5. Automatic Updates
 
-The implementation demonstrates centralized Linux package management using Ansible, reducing the need for manual per-server updates and providing a repeatable, version-controlled automation process.
+I also configured Ubuntu unattended-upgrades on five Linux servers.
+
+| Server | Automatic Updates |
+|---|---|
+| AWS Monitoring | Enabled |
+| AWS SOAR | Enabled |
+| On-premises Gateway | Enabled |
+| On-premises Linux | Enabled |
+| On-premises Security | Enabled |
+
+I checked the unattended-upgrades configuration and execution logs on each server.
+
+The evidence shows successful package installations on four servers. The on-premises gateway performed an update check, but no package installation was recorded in the captured output.
+
+## 6. Update Verification
+
+I use the following command to inspect automatic update activity:
+
+```bash
+sudo tail -30 /var/log/unattended-upgrades/unattended-upgrades.log
+```
+
+The Ansible execution results showed no failures, and the unattended-upgrades logs confirmed that automatic checks were running.
+
+**Evidence:**
+
+- `docs/evidence/updates/24-automated-system-updates.png`
+- `docs/evidence/updates/25-soar-automatic-updates.png`
+- `docs/evidence/updates/26-soar-update-execution.png`
+- `docs/evidence/updates/27-onprem-gateway-updates.png`
+- `docs/evidence/updates/28-onprem-gateway-update-execution.png`
+- `docs/evidence/updates/29-onprem-linux-updates.png`
+- `docs/evidence/updates/30-onprem-linux-update-execution.png`
+- `docs/evidence/updates/31-onprem-security-updates.png`
+- `docs/evidence/updates/32-onprem-security-update-execution.png`
+
+## 7. Limitations
+
+The Ansible playbook currently manages two on-premises systems and is started manually from the control node.
+
+The remaining servers use unattended-upgrades independently, and the playbook does not automatically reboot machines.
+
+## 8. Result
+
+The centralized Ansible update test completed successfully on both managed machines.

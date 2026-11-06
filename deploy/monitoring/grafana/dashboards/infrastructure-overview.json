@@ -140,27 +140,6 @@
       "description": "Unique Node Exporter instances currently exposing OS metrics."
     },
     {
-      "id": 5,
-      "type": "logs",
-      "title": "AWS Monitoring Server Logs",
-      "datasource": {
-        "type": "loki",
-        "uid": "loki"
-      },
-      "targets": [
-        {
-          "expr": "{job=~\"aws-monitoring.*\"}",
-          "refId": "A"
-        }
-      ],
-      "gridPos": {
-        "h": 9,
-        "w": 24,
-        "x": 0,
-        "y": 15
-      }
-    },
-    {
       "id": 6,
       "type": "timeseries",
       "title": "CPU Usage by Server (%)",

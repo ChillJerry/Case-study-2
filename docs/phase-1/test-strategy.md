@@ -1,252 +1,307 @@
-
 # Test Strategy
-## Innovatech Solutions — Hybrid Cloud Infrastructure
-
-**Project:** Hybrid Cloud Infrastructure and Security Automation
-**Client:** Innovatech Solutions
-**Document Version:** 1.0
-**Project Phase:** Phase 1 — Analysis and Design
-
----
 
 ## 1. Introduction
 
-### 1.1 Purpose
+I tested the infrastructure to make sure the networking, monitoring, SOAR application and automation tools work correctly.
 
-This document defines the testing strategy for the hybrid cloud infrastructure developed for Innovatech Solutions.
-
-Testing will verify that the deployed infrastructure satisfies the functional and non-functional requirements defined in the Requirements Analysis.
-
-The strategy covers networking, monitoring, security automation, infrastructure provisioning, system updates, data persistence and recovery.
-
-Detailed execution results will be recorded during Phase 3.
-
-### 1.2 Testing Objectives
-
-The testing process will verify that:
-
-- Cloud and on-premises infrastructure communicate securely.
-- Network segmentation prevents unauthorized communication.
-- Internal services are accessible through private network routes.
-- DNS resolves internal service names correctly.
-- Metrics and logs are collected from monitored systems.
-- Security events generate the correct alerts.
-- The SOAR application processes events and executes automated responses.
-- SOAR performance and health are visible in Grafana.
-- Infrastructure deployments and updates are automated.
-- Critical services can recover from simulated failures.
-- Data remains available or can be restored after failures.
-
----
+The tests include individual services, communication between AWS and VirtualBox, security restrictions and recovery from failures.
 
 ## 2. Testing Approach
 
-The infrastructure will be evaluated using five testing methods.
-
-### 2.1 Functional Testing
-
-Functional testing verifies that individual components provide their required functionality.
-
-Examples include checking Grafana dashboards, querying Loki logs and testing SOAR API endpoints.
-
-### 2.2 Integration Testing
-
-Integration testing verifies communication between multiple components.
-
-Examples include transmitting logs from on-premises systems to Loki and forwarding alerts from Grafana to SOAR.
-
-### 2.3 Security Testing
-
-Security testing verifies network restrictions, authentication, private resource access and controlled automated responses.
-
-Tests will use authorized infrastructure and simulated security events.
-
-### 2.4 Automation Testing
-
-Automation testing verifies Terraform configuration, CI/CD workflows, Docker deployment and Ansible playbooks.
-
-### 2.5 Resilience Testing
-
-Resilience testing evaluates infrastructure behavior during component failures.
-
-Failures will be simulated in a controlled environment. Recovery time, operational impact and data loss will be recorded.
-
----
+| Test Type | What I Tested |
+|---|---|
+| Functional | Grafana, DNS, SOAR endpoints and system services |
+| Integration | WireGuard, log forwarding and SOAR processing |
+| Security | Firewall rules, private access and alert handling |
+| Automation | Terraform, GitHub Actions, Ansible and system updates |
+| Recovery | Stopping and restarting monitoring services |
 
 ## 3. Test Environment
 
-The main test environment will consist of:
+### AWS
 
-- AWS monitoring EC2 instance.
-- AWS SOAR EC2 instance.
-- WireGuard VPN gateway.
-- On-premises Linux server.
-- On-premises security server.
-- Grafana, Prometheus, Loki and Alertmanager.
-- Python/FastAPI SOAR application.
-- PostgreSQL database.
-- Terraform, Ansible and GitHub Actions.
+| Server | IP Address | Purpose |
+|---|---|---|
+| Monitoring | 10.20.10.10 | Grafana, Prometheus, Loki, Alloy and Alertmanager |
+| SOAR | 10.20.20.10 | Python Flask SOAR |
+| Gateway | 10.20.30.10 | WireGuard, routing and NAT |
 
-A separate Docker Compose demonstration will support local application and integration testing.
+### VirtualBox
 
-The portable demonstration will not replace testing of actual hybrid network connectivity or AWS security controls.
+| VM | IP Address | Purpose |
+|---|---|---|
+| cs2-onprem-gateway | 10.30.0.1 | VPN, firewall and DNS |
+| cs2-onprem-linux | 10.30.0.10 | Monitoring and Ansible |
+| cs2-onprem-security | 10.30.0.20 | Security monitoring |
 
----
+## 4. Network and Security Tests
 
-## 4. Planned Test Cases
+### T01 — Network Segmentation
 
-### 4.1 Network and Security
+I checked the AWS subnets and security groups to confirm that Monitoring, SOAR and Gateway are separated.
 
-| ID | Test | Expected Result | Requirement |
-|---|---|---|---|
-| T01 | Verify AWS network segmentation | Unauthorized connections between network segments are blocked | P2-02 |
-| T02 | Verify database isolation | PostgreSQL cannot be accessed from unauthorized networks | P2-03 |
-| T03 | Establish WireGuard VPN | Authorized cloud and local systems communicate through the VPN | P2-02, P2-03 |
-| T04 | Verify internal DNS | Internal service names resolve to the correct private addresses | P2-04 |
-| T05 | Verify firewall restrictions | Only documented traffic paths are permitted | P2-02, P2-03 |
+**Result:** Passed for the inspected configuration.
 
-### 4.2 Monitoring
+**Evidence:** `network/01-aws-ec2-instances.png`, `network/02-aws-security-groups.png`
 
-| ID | Test | Expected Result | Requirement |
-|---|---|---|---|
-| T06 | Collect infrastructure metrics | Prometheus receives CPU, memory and disk metrics | P2-06 |
-| T07 | Collect authentication logs | Linux authentication events appear in Loki | P2-07 |
-| T08 | Collect firewall logs | Firewall events appear in Loki | P2-07 |
-| T09 | Trigger security alert | A matching security event generates an alert | P2-07 |
-| T10 | Verify Grafana dashboards | Metrics, logs and operational information are displayed | P2-06, P2-07 |
+### T02 — Database Isolation
 
-### 4.3 SOAR
+The original PostgreSQL design was replaced with local SQLite and JSONL storage on the SOAR server.
 
-| ID | Test | Expected Result | Requirement |
-|---|---|---|---|
-| T11 | Submit a valid security event | SOAR accepts and records the event | P2-08 |
-| T12 | Submit an invalid event | SOAR rejects invalid input without processing actions | P2-08 |
-| T13 | Trigger notification response | SOAR sends a notification and records the result | P2-08 |
-| T14 | Trigger simulated IP blocking | An authorized test IP is blocked on the simulated firewall | P2-08 |
-| T15 | Test duplicate event handling | Repeated alerts do not execute unintended duplicate actions | P2-08 |
-| T16 | Verify SOAR monitoring | Grafana displays processing counts, failures and durations | P2-09 |
-| T17 | Verify platform separation | Monitored systems and SOAR operate on separate platforms | P2-08 |
+**Result:** Original test no longer applicable; local storage permissions still need verification.
 
-### 4.4 Infrastructure Automation
+### T03 — WireGuard Connectivity
 
-| ID | Test | Expected Result | Requirement |
-|---|---|---|---|
-| T18 | Validate Terraform configuration | Terraform formatting and validation succeed | P2-10 |
-| T19 | Verify infrastructure deployment | Terraform provisions the defined AWS resources | P2-10 |
-| T20 | Execute CI/CD pipeline | Tests and deployment run using the local runner | P2-11, P2-12 |
-| T21 | Execute Ansible updates | At least two machines receive centrally managed updates | P1-05 |
-| T22 | Verify update results | Package versions and service health are checked | P1-05 |
+I checked the VPN handshake using `sudo wg show` and tested private HTTP access to Grafana.
 
-### 4.5 Resilience and Recovery
+**Result:** Passed.
 
-| ID | Test | Expected Result | Requirement |
-|---|---|---|---|
-| T23 | Stop monitoring container | Service restarts or is restored using the documented procedure | P2-01 |
-| T24 | Stop SOAR application | Service recovery is observed and recorded | P2-01 |
-| T25 | Restart PostgreSQL | Persistent incident records remain available | P2-01 |
-| T26 | Restart an EC2 instance | Services recover following the documented procedure | P2-01 |
-| T27 | Disconnect WireGuard | Monitoring identifies unavailable targets and recovery is possible | P2-01 |
-| T28 | Restore PostgreSQL backup | Incident records are recovered successfully | P2-01 |
+**Evidence:** `network/03-wireguard-vpn.png`, `network/04-private-connectivity.png`
 
----
+### T04 — Internal DNS
 
-## 5. Test Execution
+I tested the three internal DNS records from the gateway and Linux VM using `dig @10.30.0.1`.
 
-Each test will be executed using a documented procedure.
+**Result:** Passed for direct DNS queries.
 
-The following information will be recorded:
+**Evidence:** `network/05-private-dns-gateway.png`, `network/05-private-dns-linux.png`
 
-- Test identifier.
-- Test date.
-- Requirement reference.
-- Preconditions.
-- Execution steps.
-- Expected result.
-- Actual result.
-- Pass or fail status.
-- Supporting evidence.
-- Identified issues.
-- Corrective actions.
+### T05 — Firewall Restrictions
 
-Tests that fail will be investigated and repeated after corrective changes.
+I generated 12 blocked TCP connection attempts across four ports and confirmed they appeared in the nftables logs.
 
----
+**Result:** Passed.
 
-## 6. Evidence Collection
+**Evidence:** `security/16-firewall-blocked-traffic.png`
 
-Evidence will be stored in the repository under the `evidence/` directory.
+## 5. Monitoring Tests
 
-Evidence may include:
+### T06 — Infrastructure Metrics
 
-- Grafana dashboard screenshots.
-- Prometheus query results.
-- Loki log query results.
-- SOAR incident records.
-- Automated response execution logs.
-- Terraform validation and deployment results.
-- GitHub Actions pipeline results.
-- Ansible execution results.
-- Network connectivity and DNS tests.
-- Backup restoration results.
-- Failure recovery measurements.
+I checked Grafana and confirmed that Prometheus displayed six healthy monitoring targets.
 
-Credentials, private keys, authentication tokens and sensitive configuration values must be excluded from recorded evidence.
+**Result:** Passed.
 
----
+**Evidence:** `monitoring/06-infrastructure-overview-A.png`
 
-## 7. Test Acceptance Criteria
+### T07 — Authentication Logs
 
-A test passes when its expected result is achieved and sufficient evidence has been recorded.
+I verified that Linux system and authentication logs appeared in Grafana, although no failed logins were recorded during the selected period.
 
-A requirement is considered verified when all tests assigned to that requirement have passed.
+**Result:** Passed for log collection.
 
-The following conditions must be satisfied before final acceptance:
+**Evidence:** `monitoring/07-security-logs-overview-A.png`
 
-- All mandatory functional requirements have been evaluated.
-- At least two distinct log sources are operational.
-- The SOAR system successfully executes at least two distinct automated response actions.
-- SOAR activity is visible on the central monitoring dashboard.
-- Multi-node updates execute through automation.
-- CI/CD pipelines execute through a local runner.
-- Network isolation and private access are verified.
-- Critical failure scenarios have been tested.
-- Database restoration has been demonstrated.
-- Remaining limitations are documented.
+### T08 — Firewall Logs
 
-Any unmet mandatory requirement must be reported rather than marked as completed.
+I used Loki to query logs containing `INNOVATECH_FW_DROP` and confirmed that the blocked connections were collected.
 
----
+**Result:** Passed.
 
-## 8. Testing Responsibilities
+**Evidence:** `monitoring/09-loki-firewall-query.png`
 
-Infrastructure testing will be performed during implementation and final verification.
+### T09 — Security Event Detection
 
-Configuration changes and test results will be maintained in Git.
+The SOAR log analyzer retrieved firewall events from Loki and identified a possible port scan.
 
-Test execution evidence will be reviewed against the acceptance criteria established in the Requirements Analysis.
+**Result:** Passed for the Python analyzer; Grafana webhook alerting was not separately tested.
 
-Feedback and identified issues will be tracked until resolved or documented as limitations.
+**Evidence:** `soar/12-port-scan-detection.png`
 
----
+### T10 — Grafana Dashboards
 
-## 9. Final Testing Documentation
+I checked the Infrastructure, Security Logs and SOAR dashboards to confirm that the available metrics and logs were displayed.
 
-The detailed test results will be maintained in:
+**Result:** Passed for the tested panels.
 
-`docs/phase-3/test-plan-and-results.md`
+**Evidence:** `monitoring/06-infrastructure-overview-A.png`, `monitoring/07-security-logs-overview-A.png`, `monitoring/08-soar-dashboard-A.png`
 
-Failure and recovery test results will additionally be maintained in:
+## 6. SOAR Tests
 
-`docs/phase-3/failure-and-recovery.md`
+### T11 — Security Event Processing
 
-The final documents will contain the actual test commands, observations, execution evidence and measured results.
+I processed a port-scanning finding generated from real firewall logs through the SOAR application.
 
----
+**Result:** Passed.
 
-## 10. Conclusion
+**Evidence:** `soar/12-port-scan-detection.png`
 
-This test strategy establishes the verification approach for the hybrid cloud infrastructure.
+### T12 — Invalid Event Handling
 
-It defines the tests required to evaluate networking, centralized monitoring, SOAR functionality, infrastructure automation and operational recovery.
+The SOAR application includes input validation and authentication, but I haven't collected separate runtime evidence showing an invalid request being rejected.
 
-The test results will provide evidence that the deployed infrastructure satisfies the identified requirements and can be operated and maintained using documented procedures.
+**Result:** Not separately verified.
+
+### T13 — Operator Notification
+
+SOAR executed `notify_operator` and prepared a notification record during the port-scanning test.
+
+**Result:** Passed for notification preparation; external delivery was not tested.
+
+**Evidence:** `soar/12-port-scan-detection.png`
+
+### T14 — Simulated Containment
+
+The SOAR application includes simulated containment actions, but I haven't collected evidence from a separate containment test.
+
+**Result:** Not separately verified.
+
+### T15 — Duplicate Detection
+
+I processed the same finding again, and SOAR returned `duplicate` without repeating the original actions.
+
+**Result:** Passed.
+
+**Evidence:** `soar/15-soar-alert-deduplication.png`
+
+### T16 — SOAR Monitoring
+
+I checked the Grafana SOAR dashboard for processed alerts, action counts, failures and service availability.
+
+**Result:** Passed.
+
+**Evidence:** `monitoring/08-soar-dashboard-A.png`, `monitoring/08-soar-dashboard-B.png`
+
+### T17 — Platform Separation
+
+The monitored Linux machines run in VirtualBox, while the SOAR application runs on a separate AWS EC2 instance.
+
+**Result:** Passed.
+
+**Evidence:** `network/01-aws-ec2-instances.png`
+
+## 7. Infrastructure and Automation Tests
+
+### T18 — Terraform Validation
+
+I ran Terraform formatting and validation checks through GitHub Actions.
+
+**Result:** Passed.
+
+**Evidence:** `cicd/19-terraform-validation.png`
+
+### T19 — AWS Deployment
+
+Terraform provisioned the AWS infrastructure, and all three EC2 instances passed their status checks.
+
+**Result:** Passed.
+
+**Evidence:** `network/01-aws-ec2-instances.png`
+
+### T20 — CI/CD Pipelines
+
+I verified successful SOAR and Monitoring deployments through GitHub Actions using my Windows self-hosted runner.
+
+**Result:** Passed.
+
+**Evidence:** `cicd/17-soar-cicd-success.png`, `cicd/18-monitoring-cicd-success.png`
+
+### T21 — Ansible Multi-Node Updates
+
+I ran one Ansible playbook against two Ubuntu machines, and both completed without failures or unreachable hosts.
+
+**Result:** Passed.
+
+**Evidence:** `updates/33-ansible-multi-server-update.png`
+
+### T22 — Update Verification
+
+I checked the Ansible results and unattended-upgrades logs, but didn't record before-and-after package versions for the Ansible run.
+
+**Result:** Partially verified.
+
+**Evidence:** `updates/33-ansible-multi-server-update.png`
+
+## 8. Recovery Tests
+
+### T23 — Grafana Failure and Recovery
+
+I stopped Grafana while the other monitoring containers continued running, then restarted it and received HTTP 200 from its health endpoint.
+
+**Result:** Passed for manual recovery.
+
+**Evidence:** `resilience/21-monitoring-health-before-test.png`, `resilience/22-monitoring-component-failure.png`, `resilience/23-monitoring-component-recovery.png`
+
+### T24 — SOAR Recovery
+
+The SOAR application is managed through systemd, but I haven't documented a controlled failure and recovery test.
+
+**Result:** Not tested.
+
+### T25 — Incident Storage Persistence
+
+I still need to verify that SQLite and JSONL records remain available after restarting SOAR.
+
+**Result:** Not tested.
+
+### T26 — EC2 Recovery
+
+I haven't performed a documented test involving restarting an EC2 instance and checking the application afterward.
+
+**Result:** Not tested.
+
+### T27 — VPN Recovery
+
+WireGuard connectivity works, but I haven't tested deliberately disconnecting and restoring the VPN.
+
+**Result:** Not tested.
+
+### T28 — Backup Restoration
+
+I haven't completed a backup restoration test for monitoring or SOAR data.
+
+**Result:** Not tested.
+
+## 9. Additional Tests
+
+### T29 — Multiple Log Sources
+
+I queried Loki for `aws-monitoring` and `onprem-firewall` and received logs from both sources.
+
+**Result:** Passed.
+
+**Evidence:** `monitoring/10-multiple-log-sources.png`
+
+### T30 — CI/CD Failure Protection
+
+I introduced invalid Grafana dashboard JSON, which caused the validation job to fail and the deployment job to be skipped.
+
+**Result:** Passed.
+
+**Evidence:** `cicd/20-pipeline-failure-protection.png`
+
+### T31 — Automatic OS Updates
+
+I checked unattended-upgrades on five Linux servers and confirmed successful update checks, with package installations shown on four servers.
+
+**Result:** Passed for the observed checks and installations.
+
+**Evidence:** `updates/24-automated-system-updates.png` through `updates/32-onprem-security-update-execution.png`
+
+### T32 — SOAR Code Inspection
+
+I used the local SOAR Execution Inspector to view the detection results and Python functions responsible for processing them.
+
+**Result:** Passed.
+
+**Evidence:** `soar/13-soar-code-inspector.png`, `soar/14-soar-rule-evaluation.png`
+
+## 10. Test Summary
+
+| Category | Passed | Partial / Limited | Not Tested / Verified |
+|---|---:|---:|---:|
+| Network and Security | 4 | 0 | 1 |
+| Monitoring | 4 | 1 | 0 |
+| SOAR | 5 | 0 | 2 |
+| Infrastructure and Automation | 4 | 1 | 0 |
+| Recovery | 1 | 0 | 5 |
+| Additional Tests | 4 | 0 | 0 |
+| **Total** | **22** | **2** | **8** |
+
+All screenshots are stored in `docs/evidence/` under the relevant folders.
+
+## 11. Remaining Tests
+
+The main things left to test are SOAR recovery, data persistence, backup restoration, VPN recovery and simulated containment.
+
+The networking, monitoring, security event processing, CI/CD and multi-server update tests have already produced working results.

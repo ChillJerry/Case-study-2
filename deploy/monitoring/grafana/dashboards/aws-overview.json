@@ -1,0 +1,245 @@
+
+{
+  "uid": "innovatech-aws-performance",
+  "title": "Innovatech AWS Infrastructure Performance",
+  "tags": ["innovatech", "aws", "ec2", "performance"],
+  "timezone": "browser",
+  "schemaVersion": 41,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "AWS Servers UP",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [{
+        "expr": "sum(up{job=\"aws-node\"}) or vector(0)",
+        "refId": "A",
+        "instant": true
+      }],
+      "options": {"colorMode": "none", "graphMode": "none", "textMode": "value"},
+      "gridPos": {"h": 5, "w": 8, "x": 0, "y": 0}
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "AWS Servers DOWN",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [{
+        "expr": "sum(up{job=\"aws-node\"} == bool 0) or vector(0)",
+        "refId": "A",
+        "instant": true
+      }],
+      "options": {"colorMode": "none", "graphMode": "none", "textMode": "value"},
+      "gridPos": {"h": 5, "w": 8, "x": 8, "y": 0}
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "AWS Server Availability",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [{
+        "expr": "up{job=\"aws-node\"}",
+        "refId": "A",
+        "legendFormat": "{{host}}",
+        "instant": true
+      }],
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value_and_name"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [{
+            "type": "value",
+            "options": {
+              "0": {"text": "DOWN", "color": "red"},
+              "1": {"text": "UP", "color": "green"}
+            }
+          }],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "red", "value": null},
+              {"color": "green", "value": 1}
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 5, "w": 8, "x": 16, "y": 0}
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "AWS CPU Usage (%)",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [{
+        "expr": "100 * (1 - avg by(host) (rate(node_cpu_seconds_total{job=\"aws-node\",mode=\"idle\"}[5m])))",
+        "refId": "A",
+        "legendFormat": "{{host}}"
+      }],
+      "fieldConfig": {
+        "defaults": {"unit": "percent", "min": 0, "max": 100},
+        "overrides": []
+      },
+      "gridPos": {"h": 9, "w": 12, "x": 0, "y": 5}
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "AWS Memory Usage (%)",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [{
+        "expr": "100 * (1 - node_memory_MemAvailable_bytes{job=\"aws-node\"} / node_memory_MemTotal_bytes{job=\"aws-node\"})",
+        "refId": "A",
+        "legendFormat": "{{host}}"
+      }],
+      "fieldConfig": {
+        "defaults": {"unit": "percent", "min": 0, "max": 100},
+        "overrides": []
+      },
+      "gridPos": {"h": 9, "w": 12, "x": 12, "y": 5}
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "AWS Root Disk Usage (%)",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [{
+        "expr": "100 * (1 - node_filesystem_avail_bytes{job=\"aws-node\",mountpoint=\"/\",fstype!~\"tmpfs|overlay\"} / node_filesystem_size_bytes{job=\"aws-node\",mountpoint=\"/\",fstype!~\"tmpfs|overlay\"})",
+        "refId": "A",
+        "legendFormat": "{{host}}"
+      }],
+      "fieldConfig": {
+        "defaults": {"unit": "percent", "min": 0, "max": 100},
+        "overrides": []
+      },
+      "gridPos": {"h": 9, "w": 12, "x": 0, "y": 14}
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "AWS Network Traffic",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {
+          "expr": "sum by(host) (rate(node_network_receive_bytes_total{job=\"aws-node\",device!~\"lo|veth.*|docker.*|br-.*\"}[5m]))",
+          "refId": "A",
+          "legendFormat": "Receive {{host}}"
+        },
+        {
+          "expr": "sum by(host) (rate(node_network_transmit_bytes_total{job=\"aws-node\",device!~\"lo|veth.*|docker.*|br-.*\"}[5m]))",
+          "refId": "B",
+          "legendFormat": "Transmit {{host}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "Bps"},
+        "overrides": []
+      },
+      "gridPos": {"h": 9, "w": 12, "x": 12, "y": 14}
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "AWS Disk Read / Write",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {
+          "expr": "sum by(host) (rate(node_disk_read_bytes_total{job=\"aws-node\",device!~\"loop.*|ram.*\"}[5m]))",
+          "refId": "A",
+          "legendFormat": "Read {{host}}"
+        },
+        {
+          "expr": "sum by(host) (rate(node_disk_written_bytes_total{job=\"aws-node\",device!~\"loop.*|ram.*\"}[5m]))",
+          "refId": "B",
+          "legendFormat": "Write {{host}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "Bps"},
+        "overrides": []
+      },
+      "gridPos": {"h": 9, "w": 12, "x": 0, "y": 23}
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "AWS System Load",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [{
+        "expr": "node_load1{job=\"aws-node\"}",
+        "refId": "A",
+        "legendFormat": "{{host}}"
+      }],
+      "gridPos": {"h": 9, "w": 12, "x": 12, "y": 23}
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "AWS CPU I/O Wait (%)",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [{
+        "expr": "100 * avg by(host) (rate(node_cpu_seconds_total{job=\"aws-node\",mode=\"iowait\"}[5m]))",
+        "refId": "A",
+        "legendFormat": "{{host}}"
+      }],
+      "fieldConfig": {
+        "defaults": {"unit": "percent", "min": 0, "max": 100},
+        "overrides": []
+      },
+      "gridPos": {"h": 9, "w": 12, "x": 0, "y": 32}
+    },
+    {
+      "id": 11,
+      "type": "stat",
+      "title": "AWS Server Uptime",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [{
+        "expr": "time() - node_boot_time_seconds{job=\"aws-node\"}",
+        "refId": "A",
+        "legendFormat": "{{host}}",
+        "instant": true
+      }],
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "textMode": "value_and_name"
+      },
+      "fieldConfig": {
+        "defaults": {"unit": "s"},
+        "overrides": []
+      },
+      "gridPos": {"h": 9, "w": 12, "x": 12, "y": 32}
+    },
+    {
+      "id": 12,
+      "type": "stat",
+      "title": "AWS Root Disk Free Space",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [{
+        "expr": "node_filesystem_avail_bytes{job=\"aws-node\",mountpoint=\"/\",fstype!~\"tmpfs|overlay\"}",
+        "refId": "A",
+        "legendFormat": "{{host}}",
+        "instant": true
+      }],
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "textMode": "value_and_name"
+      },
+      "fieldConfig": {
+        "defaults": {"unit": "bytes"},
+        "overrides": []
+      },
+      "gridPos": {"h": 9, "w": 12, "x": 0, "y": 41}
+    }
+  ]
+}

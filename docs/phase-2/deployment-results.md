@@ -1,228 +1,185 @@
-
-# Phase 2 — Initial AWS Deployment Results
+# Phase 2 — Deployment Results
 
 ## 1. Overview
 
-This document records the initial deployment and verification of the AWS infrastructure for the Innovatech Solutions hybrid-cloud and security automation project.
+During Phase 2, I deployed the AWS infrastructure, created the on-premises environment in VirtualBox and connected both environments using WireGuard.
 
-The objective of this implementation stage was to provision the cloud infrastructure using Infrastructure as Code (IaC), establish secure instance management, implement the initial network routing configuration, and verify that the deployed servers are operational.
+I also configured centralized monitoring, security event processing, internal DNS and automated deployment workflows.
 
-The infrastructure was provisioned in the AWS Frankfurt region (`eu-central-1`) using Terraform.
+## 2. AWS Infrastructure
 
-**Implementation date:** 29 October 2026
+I used Terraform to deploy three Ubuntu EC2 instances in the Frankfurt region (`eu-central-1`).
 
-**Implementation status:** Initial AWS deployment completed and verified. Hybrid VPN connectivity, monitoring services, and SOAR functionality remain under implementation.
-
-## 2. Deployed Infrastructure
-
-### 2.1 Virtual Private Cloud
-
-A dedicated AWS Virtual Private Cloud was created to provide network isolation and segmented infrastructure.
-
-| Component | Configuration |
-|---|---|
-| AWS region | eu-central-1 (Frankfurt) |
-| VPC | innovatech-cs2-vpc |
-| VPC ID | vpc-025555df114f75969 |
-| VPC CIDR | 10.20.0.0/16 |
-| Monitoring subnet | 10.20.10.0/24 |
-| SOAR subnet | 10.20.20.0/24 |
-| Gateway subnet | 10.20.30.0/24 |
-| Provisioning method | Terraform |
-
-The Monitoring and SOAR subnets are private. Their EC2 instances do not have directly assigned public IP addresses.
-
-The gateway subnet has a route to the Internet Gateway and hosts the instance responsible for NAT and future VPN connectivity.
-
-### 2.2 EC2 Instances
-
-Three Ubuntu EC2 instances were provisioned.
-
-| Server | Instance type | Private IP | Storage | Purpose |
-|---|---|---|---|---|
-| Monitoring | t3.medium | 10.20.10.10 | 40 GiB gp3 | Centralized monitoring and logging |
-| SOAR | t3.small | 10.20.20.10 | 20 GiB gp3 | Security orchestration and automated responses |
-| Gateway | t3.micro | 10.20.30.10 | 12 GiB gp3 | Network routing, NAT, and WireGuard VPN |
-
-The gateway was allocated the public IPv4 address `3.66.71.166`.
-
-The instances use encrypted EBS root volumes, require IMDSv2, and are configured with standard T3 CPU credits.
-
-The Monitoring and SOAR servers have no public IPv4 addresses.
-
-## 3. Network Configuration
-
-### 3.1 Routing
-
-The infrastructure uses separate route tables for the gateway and private application subnets.
-
-The gateway subnet routes internet-bound traffic through the Internet Gateway.
-
-The private application subnets route outbound traffic through the gateway EC2 instance.
-
-A route for the planned on-premises network (`10.30.0.0/24`) also points toward the gateway. This route is intended for future WireGuard connectivity.
-
-Source/destination checking was disabled on the gateway instance to permit traffic forwarding.
-
-### 3.2 NAT Gateway Functionality
-
-Instead of using a managed AWS NAT Gateway, the architecture uses a dedicated EC2 instance running Linux IP forwarding and nftables.
-
-This approach was selected to provide routing control and reduce infrastructure costs during the development stage.
-
-The following components were configured:
-
-- IPv4 forwarding enabled through sysctl.
-- nftables forwarding policy.
-- Connection tracking for established and related connections.
-- Source NAT masquerading for internet-bound traffic from private AWS subnets.
-- Exclusions for internal VPC and simulated on-premises destinations.
-- Initial forwarding rules for future WireGuard traffic.
-
-The gateway configuration was verified using Linux system commands.
-
-### 3.3 Gateway Connectivity Test
-
-The gateway's internet connectivity was tested using:
-
-`curl -I --max-time 10 https://aws.amazon.com`
-
-The command returned HTTP status `200`, confirming successful outbound HTTPS connectivity from the gateway.
-
-The Monitoring and SOAR instances also successfully registered with AWS Systems Manager after the gateway routing configuration was repaired.
-
-This provides evidence that the private instances can communicate with the required AWS management endpoints.
-
-## 4. Security and Instance Management
-
-### 4.1 AWS Systems Manager
-
-AWS Systems Manager Session Manager was selected for instance administration.
-
-An IAM instance profile with the AWS-managed `AmazonSSMManagedInstanceCore` policy was attached to the EC2 instances.
-
-This provides a management method that does not require public SSH access.
-
-All three EC2 instances were confirmed as online in Systems Manager.
-
-### 4.2 Network Security
-
-Security groups were created to restrict inbound communication according to server responsibilities.
-
-The initial design includes:
-
-- WireGuard UDP port 51820 on the gateway.
-- Grafana TCP port 3000 from the planned on-premises network.
-- Loki TCP port 3100 from the planned on-premises network.
-- SOAR API TCP port 8000 from the monitoring security group.
-
-The presence of these rules in Terraform was verified. Application-level access restrictions and VPN traffic policies still require runtime testing.
-
-## 5. Infrastructure Validation
-
-### 5.1 Terraform Validation
-
-Terraform configuration checks were completed successfully.
-
-The GitHub Actions infrastructure validation workflow was executed using a local Windows self-hosted runner.
-
-The workflow completed successfully, including Terraform formatting and validation checks.
-
-### 5.2 Terraform Deployment
-
-Before deployment, Terraform generated the following execution plan:
-
-- 31 resources to create.
-- 0 resources to change.
-- 0 resources to destroy.
-
-The planned AWS infrastructure was subsequently deployed.
-
-Terraform outputs confirmed the VPC ID, subnet IDs, gateway public address, and private server addresses.
-
-### 5.3 EC2 Instance Health
-
-AWS EC2 status checks were performed for all three instances.
-
-| Server | Instance state | System status | Instance status |
+| Server | Instance Type | Private IP | Storage |
 |---|---|---|---|
-| Monitoring | Running | OK | OK |
-| SOAR | Running | OK | OK |
-| Gateway | Running | OK | OK |
+| Monitoring | t3.medium | 10.20.10.10 | 40 GiB |
+| SOAR | t3.small | 10.20.20.10 | 20 GiB |
+| Gateway | t3.micro | 10.20.30.10 | 12 GiB |
 
-All three instances passed their EC2 health checks.
+The infrastructure uses the VPC `10.20.0.0/16`, with separate subnets for each server.
 
-### 5.4 Systems Manager Verification
+The Monitoring and SOAR servers have no public IP addresses, while the gateway provides internet access, NAT and VPN connectivity.
 
-All three servers were confirmed online in AWS Systems Manager.
+All three instances passed their EC2 status checks, and I used AWS Systems Manager for administration.
 
-| Server | SSM status |
+**Evidence:**
+- `docs/evidence/network/01-aws-ec2-instances.png`
+- `docs/evidence/network/02-aws-security-groups.png`
+
+## 3. On-Premises Infrastructure
+
+I created three Ubuntu VMs in VirtualBox.
+
+| VM | IP Address | Purpose |
+|---|---|---|
+| cs2-onprem-gateway | 10.30.0.1 | VPN, firewall and DNS |
+| cs2-onprem-linux | 10.30.0.10 | Monitoring and Ansible |
+| cs2-onprem-security | 10.30.0.20 | Security monitoring |
+
+The machines communicate through an internal VirtualBox network, with the gateway handling traffic between the local network and AWS.
+
+## 4. WireGuard VPN
+
+I configured WireGuard between the AWS gateway (`10.40.0.1`) and on-premises gateway (`10.40.0.2`).
+
+The tunnel connects the AWS network `10.20.0.0/16` with the on-premises network `10.30.0.0/24`.
+
+I verified the connection using `sudo wg show` and successfully accessed Grafana through its private AWS IP address.
+
+**Evidence:**
+- `docs/evidence/network/03-wireguard-vpn.png`
+- `docs/evidence/network/04-private-connectivity.png`
+
+## 5. Firewall and Internal DNS
+
+I configured nftables on the on-premises gateway with a default-drop input policy and rules allowing the required network traffic.
+
+Unauthorized TCP connections were blocked and logged using the prefix `INNOVATECH_FW_DROP`.
+
+I also installed dnsmasq to resolve these internal hostnames:
+
+| Hostname | Private IP |
 |---|---|
-| Monitoring | Online |
-| SOAR | Online |
-| Gateway | Online |
+| monitoring.innovatech.internal | 10.20.10.10 |
+| soar.innovatech.internal | 10.20.20.10 |
+| gateway.innovatech.internal | 10.30.0.1 |
 
-This verified that the instances were registered as managed nodes and communicating with Systems Manager at the time of testing.
+The DNS firewall rules were saved in `/etc/nftables.conf`, and I successfully tested resolution from both the gateway and a Linux client.
 
-## 6. WireGuard Preparation
+**Evidence:**
+- `docs/evidence/security/16-firewall-blocked-traffic.png`
+- `docs/evidence/network/05-private-dns-gateway.png`
+- `docs/evidence/network/05-private-dns-linux.png`
 
-WireGuard was installed on the AWS gateway.
+## 6. Monitoring Deployment
 
-The installation was verified using `wg --version`.
+I deployed the monitoring stack on the AWS Monitoring server using Docker Compose.
 
-An AWS WireGuard private/public key pair was generated and stored on the gateway under `/etc/wireguard/`.
+The stack contains:
 
-The private key is not stored in the Git repository.
+| Service | Purpose |
+|---|---|
+| Grafana | Dashboards |
+| Prometheus | Infrastructure and application metrics |
+| Loki | Centralized logs |
+| Alloy | Telemetry collection |
+| Alertmanager | Prometheus alert management |
 
-The VPN interface, peer configuration, and connection to the simulated on-premises network have not yet been completed.
+I configured three dashboards for infrastructure monitoring, security logs and SOAR activity.
 
-## 7. Issues Encountered
+Prometheus showed six healthy targets, and Loki successfully collected logs from both AWS and the on-premises gateway.
 
-During the initial deployment, the gateway's cloud-init user-data script failed to execute.
+I also configured the `ServerDown`, `HighCPUUsage` and `HighMemoryUsage` alert rules.
 
-The error was caused by a newline character appearing before the Bash shebang (`#!/bin/bash`).
+**Evidence:**
+- `docs/evidence/monitoring/06-infrastructure-overview-A.png`
+- `docs/evidence/monitoring/07-security-logs-overview-A.png`
+- `docs/evidence/monitoring/09-loki-firewall-query.png`
+- `docs/evidence/monitoring/10-multiple-log-sources.png`
+- `docs/evidence/monitoring/11-monitoring-alerting.png`
 
-This prevented the nftables configuration and IP forwarding setup from being initialized automatically.
+## 7. SOAR Deployment
 
-The issue was diagnosed using cloud-init logs, corrected on the running instance, and fixed in the Terraform bootstrap source.
+I developed the SOAR application using Python and Flask and deployed it on a separate AWS EC2 instance using Gunicorn and systemd.
 
-Detailed troubleshooting information is recorded in `issue-log.md`.
+The application handles security alerts, evaluates rules, detects duplicates and executes predefined response actions.
 
-## 8. Cost Management
+The main actions include incident recording, notification preparation and simulated containment.
 
-The infrastructure is intended to operate as a development and testing environment rather than a continuously running production system.
+### Security Detection Test
 
-To reduce unnecessary AWS expenditure:
+I generated 12 blocked TCP connections across four destination ports on the on-premises gateway.
 
-- EC2 instances are stopped when development work is finished.
-- The gateway is started before the private application instances.
-- The private application instances are stopped before the gateway.
-- EBS storage and public IPv4 charges are considered separately from EC2 compute usage.
-- Managed networking services with ongoing hourly charges are avoided where technically appropriate.
+The firewall logs were sent to Loki, where my Python log analyzer identified one possible port-scanning event.
 
-All three EC2 instances were stopped at the end of the initial implementation session.
+SOAR processed the finding, recorded the incident and prepared an operator notification.
 
-## 9. Remaining Work
+I also repeated the same analysis and confirmed that the application recognized the finding as a duplicate.
 
-The following activities remain:
+**Evidence:**
+- `docs/evidence/soar/12-port-scan-detection.png`
+- `docs/evidence/soar/14-soar-rule-evaluation.png`
+- `docs/evidence/soar/15-soar-alert-deduplication.png`
 
-1. Create the simulated on-premises virtual machines.
-2. Configure the local virtual network and gateway.
-3. Establish the WireGuard VPN connection.
-4. Implement internal DNS resolution.
-5. Deploy Grafana, Prometheus, Loki, and supporting monitoring components.
-6. Develop and deploy the FastAPI-based SOAR application.
-7. Configure log collection from multiple sources.
-8. Implement security alerting and automated response actions.
-9. Integrate Ansible-based updates and deployment automation.
-10. Execute integration, security, availability, and recovery tests.
+## 8. CI/CD Deployment
 
-## 10. Conclusion
+I configured GitHub Actions using my Windows self-hosted runner.
 
-The initial AWS infrastructure was deployed and verified successfully.
+The repository contains three main workflows:
 
-The implementation demonstrated Infrastructure as Code provisioning, network segmentation, secure remote management, fault diagnosis, and operational cost control.
+| Workflow | Purpose |
+|---|---|
+| Infrastructure Checks | Terraform validation |
+| SOAR CI/CD | Python testing and AWS deployment |
+| Monitoring CI/CD | Grafana dashboard validation and deployment |
 
-The completed cloud infrastructure provides the foundation for the upcoming hybrid networking, observability, and SOAR implementation activities.
+The SOAR workflow uses Amazon S3 and Systems Manager to deploy application changes without exposing SSH publicly.
 
-Further testing will be required before the overall system can be considered fully operational.
+I also tested the monitoring pipeline with invalid JSON, which caused validation to fail and deployment to be skipped.
+
+**Evidence:**
+- `docs/evidence/cicd/17-soar-cicd-success.png`
+- `docs/evidence/cicd/18-monitoring-cicd-success.png`
+- `docs/evidence/cicd/19-terraform-validation.png`
+- `docs/evidence/cicd/20-pipeline-failure-protection.png`
+
+## 9. System Updates
+
+I configured Ubuntu unattended-upgrades on all five Linux servers and checked their update logs.
+
+I also used Ansible to update `cs2-onprem-linux` and `cs2-onprem-security` from one control node.
+
+Both machines completed the Ansible playbook without failed or unreachable tasks.
+
+**Evidence:**
+- `docs/evidence/updates/24-automated-system-updates.png`
+- `docs/evidence/updates/26-soar-update-execution.png`
+- `docs/evidence/updates/30-onprem-linux-update-execution.png`
+- `docs/evidence/updates/33-ansible-multi-server-update.png`
+
+## 10. Recovery Testing
+
+I performed a controlled monitoring failure test by stopping the Grafana container while keeping Prometheus, Loki, Alloy and Alertmanager running.
+
+After manually restarting Grafana, its health endpoint returned HTTP 200 and confirmed that the service was healthy.
+
+**Evidence:**
+- `docs/evidence/resilience/21-monitoring-health-before-test.png`
+- `docs/evidence/resilience/22-monitoring-component-failure.png`
+- `docs/evidence/resilience/23-monitoring-component-recovery.png`
+
+## 11. Issues Encountered
+
+During the initial AWS deployment, the gateway's cloud-init script failed because an empty line appeared before the Bash shebang.
+
+I fixed the script, repaired the gateway configuration and updated the Terraform source to prevent the same issue during future deployments.
+
+Another issue occurred when DNS queries from the Linux VM timed out because nftables was blocking port 53.
+
+I added specific TCP and UDP DNS rules, validated the configuration and confirmed that the client could resolve the internal records.
+
+## 12. Current Result
+
+The AWS and VirtualBox environments are connected through WireGuard, and the main monitoring and SOAR services are operational.
+
+Terraform, GitHub Actions, Ansible and unattended-upgrades provide infrastructure and system automation.

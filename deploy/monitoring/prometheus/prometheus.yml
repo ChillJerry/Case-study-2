@@ -50,6 +50,24 @@ scrape_configs:
           environment: "aws"
           service: "innovatech-soar"
 
+  - job_name: "aws-node"
+    scrape_interval: 30s
+    static_configs:
+      - targets: [ "10.20.10.10:9100" ]
+        labels:
+          host: "AWS Monitoring"
+          environment: "aws"
+
+      - targets: [ "10.20.20.10:9100" ]
+        labels:
+          host: "AWS SOAR"
+          environment: "aws"
+
+      - targets: [ "10.20.30.10:9100" ]
+        labels:
+          host: "AWS Gateway"
+          environment: "aws"
+
   - job_name: alloy
     static_configs:
       - targets:

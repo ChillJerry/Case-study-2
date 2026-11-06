@@ -2,7 +2,7 @@
     "id":  null,
     "uid":  "innovatech-soar-security",
     "title":  "Innovatech | SOAR Security Operations",
-    "description":  "SOAR security monitoring: availability, security events, severity, alert processing, automated responses, action outcomes and processing latency.",
+    "description":  "SOAR service health, alert processing, response actions, performance, and PostgreSQL execution history.",
     "tags":  [
                  "innovatech",
                  "soar",
@@ -12,7 +12,7 @@
              ],
     "timezone":  "browser",
     "schemaVersion":  41,
-    "version":  6,
+    "version":  7,
     "editable":  false,
     "graphTooltip":  1,
     "refresh":  "15s",
@@ -1523,6 +1523,70 @@
 
                                                          ]
                                        }
+                   },
+                   {
+                       "id":  33,
+                       "collapsed":  false,
+                       "panels":  [
+
+                                  ],
+                       "type":  "row",
+                       "title":  "06 | SOAR Execution History | PostgreSQL",
+                       "gridPos":  {
+                                       "y":  76,
+                                       "w":  24,
+                                       "x":  0,
+                                       "h":  1
+                                   }
+                   },
+                   {
+                       "options":  {
+                                       "showHeader":  true,
+                                       "footer":  {
+                                                      "show":  false
+                                                  },
+                                       "cellHeight":  "sm"
+                                   },
+                       "id":  34,
+                       "type":  "table",
+                       "description":  "Latest 100 execution records stored in PostgreSQL. Notifications are prepared records; containment actions are simulated.",
+                       "datasource":  {
+                                          "type":  "grafana-postgresql-datasource",
+                                          "uid":  "dg3hhnd1na7lsf"
+                                      },
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "custom":  {
+                                                                           "align":  "auto",
+                                                                           "cellOptions":  {
+                                                                                               "type":  "auto"
+                                                                                           },
+                                                                           "inspect":  false
+                                                                       }
+                                                        },
+                                           "overrides":  [
+
+                                                         ]
+                                       },
+                       "targets":  [
+                                       {
+                                           "editorMode":  "code",
+                                           "datasource":  {
+                                                              "type":  "grafana-postgresql-datasource",
+                                                              "uid":  "dg3hhnd1na7lsf"
+                                                          },
+                                           "format":  "table",
+                                           "refId":  "A",
+                                           "rawSql":  "SELECT\n    created_at AS \"Time\",\n    record_type AS \"Record Type\",\n    event_type AS \"Event\",\n    COALESCE(details-\u003e\u003e\u0027host\u0027, \u0027-\u0027) AS \"Host\",\n    COALESCE(action_name, \u0027-\u0027) AS \"Action\",\n    status AS \"Status\",\n    severity AS \"Severity\",\n    COALESCE(source_ip, \u0027-\u0027) AS \"Source IP\"\nFROM public.execution_records\nORDER BY created_at DESC\nLIMIT 100;"
+                                       }
+                                   ],
+                       "title":  "SOAR Execution History",
+                       "gridPos":  {
+                                       "y":  77,
+                                       "w":  24,
+                                       "x":  0,
+                                       "h":  12
+                                   }
                    }
                ]
 }

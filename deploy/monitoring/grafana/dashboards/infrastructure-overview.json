@@ -431,7 +431,7 @@
       },
       "targets": [
         {
-          "expr": "time() - node_boot_time_seconds",
+          "expr": "time() - node_boot_time_seconds{environment=\"on-premises\"}",
           "refId": "A",
           "legendFormat": "{{instance}}",
           "instant": true
@@ -471,7 +471,7 @@
       },
       "targets": [
         {
-          "expr": "node_filesystem_avail_bytes{mountpoint=\"/\",fstype!~\"tmpfs|overlay\"}",
+          "expr": "node_filesystem_avail_bytes{environment=\"on-premises\",mountpoint=\"/\",fstype!~\"tmpfs|overlay\"}",
           "refId": "A",
           "legendFormat": "{{instance}}",
           "instant": true
